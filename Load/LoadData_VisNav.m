@@ -1,23 +1,60 @@
-function LoadData(EXP, P, S)
+function LoadData_VisNav(EXP, P, S)
 P.LoadParams.animal = S.animalname;
 P.LoadParams.series = S.series;
 P.LoadParams.exp = S.explist;
 
 %load synch files
 for iexp = 1:numel(S.explist)
-if ~isempty(S.VR_path)
-    EXP.Nav.SynchTimes = GetSynchTimes(S.VR_path);
+    if ~isempty(S.VR_path{iexp,2})
+        Nav.SynchSignal = GetSynchTimes(S.VR_path{iexp,2}, signalType);
+        if strcmp(P.LoadParams.SynchRef,'VR')
+            SynchTimesRef = Nav.SynchTimes;
+        end
+    end
+    if ~isempty(S.ephys_path{iexp,2})
+        Spk.SynchSignal = GetSynchTimes(S.ephys_path{iexp,2}, signalType);
+        Lfp.SynchSignal = GetSynchTimes(S.ephys_path{iexp,2}, signalType);
+        if strcmp(P.LoadParams.SynchRef,'ephys')
+            SynchTimesRef = Spk.SynchTimes;
+        end
+    end
+    if ~isempty(S.vis_path{iexp,2})
+        Vis.SynchSignal = GetSynchTimes(S.vis_path{iexp,2}, signalType);
+        if strcmp(P.LoadParams.SynchRef,'BonV')
+            SynchTimesRef = Vis.SynchTimes;
+        end
+    end
+    if ~isempty(S.eye_path{iexp,2})
+        Eye.SynchSignal = GetSynchTimes(S.eye_path{iexp,2}, signalType);
+        if strcmp(P.LoadParams.SynchRef,'eye')
+            SynchTimesRef = Eye.SynchTimes;
+        end
+    end
+    
+    %[Nav, Spk, Vis, Eye with zero correction, clockfactor] = SynchSignals(SynchTimesRef,Nav, Spk, Vis, Eye);
+    
+    if ~isempty(S.VR_path{iexp,1})
+        %Nav = Wheelload(S.VR_path{iexp,1},sampleTimes,Nav_zerocorrection);
+    end
+    if ~isempty(S.ephys_path{iexp,1})
+        %Spk = getSpikes(S.ephys_path{iexp,1},sampleTimes,Spk_zerocorrection)
+        %Lfp = getLFP(Lfp)
+    end
+    if ~isempty(S.vis_path{iexp,2})
+        %Vis = getBonvision(Vis)
+    end
+    if ~isempty(S.eye_path{iexp,2})
+        %Eye = getEyetracking(Eye)
+    end
+    EXP.Nav = combineTwoexpts(EXP.Nav, Nav);
+    EXP.Spk = combineTwoexpts(EXP.Spk, Spk);
+    EXP.Lfp = combineTwoexpts(EXP.Lfp, Lfp);
+    EXP.Vis = combineTwoexpts(EXP.Vis, Vis);
+    EXP.Eye = combineTwoexpts(EXP.Eye, Eye);
 end
-if ~isempty(S.ephys_path)
-    EXP.Spk.SynchTimes = GetSynchTimes(S.ephys_path);
-    EXP.Lfp.SynchTimes = GetSynchTimes(S.ephys_path);
-end
-if ~isempty(S.vis_path)
-    EXP.Vis.SynchTimes = GetSynchTimes(S.vis_path);
-end
-if ~isempty(S.eye_path)
-    EXP.Eye.SynchTimes = GetSynchTimes(S.eye_path);
-end
+
+%Then possibly resample relative to another signal with a function similar
+%to VRbinbythetaphase
 
 
 
