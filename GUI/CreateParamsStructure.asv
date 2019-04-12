@@ -1,0 +1,33 @@
+function P = CreateParamsStructure
+%create Parameter structure used troughout the GUI
+if ~isempty(savedParamsFile)
+    SavedParams = load(savedParamsFile);
+else
+    SavedParams = [];
+end
+
+P = Tstructure('Params');
+P.addprop('DatabaseFilters');
+P.DatabaseFilters = DefaultDatabaseFilters;
+if ~isempty(SavedParams)
+    P.DatabaseFilters = UpdateFields(P.DatabaseFilters,SavedParams.DatabaseFilters);
+end
+P.addprop('LoadParams');
+P.LoadParams = DefaultLoadParams;
+if ~isempty(SavedParams)
+    P.DatabaseFilters = UpdateFields(P.DatabaseFilters,SavedParams.DatabaseFilters);
+end
+P.addprop('AnalysisOptions');
+P.AnalysisOptions = DefaultAnalysisOptions;
+P.addprop('PlotParamsMaps');
+P.PlotParamsMaps = DefaultPlotParamsMaps;
+P.addprop('PlotParamsDecoder');
+P.PlotParamsDecoder = DefaultPlotParamsDecoder;
+P.addprop('PlotParamsBehavior');
+P.PlotParamsBehavior = DefaultPlotParamsBehavior;
+P.addprop('DIRS');
+P.DIRS = SetDirectories(serverName);
+
+
+
+end

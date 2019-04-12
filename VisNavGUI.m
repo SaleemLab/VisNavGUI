@@ -1,42 +1,17 @@
 function VisNavGUI(savedParamsFile)
-serverName = 'C:\';
 if nargin < 1
     savedParamsFile = [];
 end
+
+%Load or create Parameter structure used troughout the GUI
 if ~isempty(savedParamsFile)
     load(savedParamsFile,'P');
 else
-    P = Tstructure('Params');
-    P.addprop('DatabaseFilters');
-    P.DatabaseFilters = DefaultDatabaseFilters;
-    P.addprop('LoadParams');
-    P.LoadParams = DefaultLoadParams;
-    P.addprop('AnalysisOptions');
-    P.AnalysisOptions = DefaultAnalysisOptions;
-    P.addprop('PlotParamsMaps');
-    P.PlotParamsMaps = DefaultPlotParamsMaps;
-    P.addprop('PlotParamsDecoder');
-    P.PlotParamsDecoder = DefaultPlotParamsDecoder;
-    P.addprop('PlotParamsBehavior');
-    P.PlotParamsBehavior = DefaultPlotParamsBehavior;
-    P.addprop('DIRS');
-    P.DIRS = SetDirectories(serverName);
+    P = CreateParamsStructure(savedParamsFile);
 end
 
-%path of the directories where the data are
-
-%create the data structure object
-EXP = Tstructure('Data');
-EXP.addprop('animal');
-EXP.addprop('series');
-EXP.addprop('exp');
-
-EXP.addprop('Nav');
-EXP.addprop('Vis');
-EXP.addprop('Eye');
-EXP.addprop('Spk');
-EXP.addprop('Lfp');
-
+%create and define fields of the data structure used troughout the GUI
+EXP = CreateEXPStructure;
 
 %create the GUI object
 GUI = TMultigraph('VisNav');
@@ -56,8 +31,8 @@ GUI.Hdividepage(P.PlotParamsBehavior.Page, 2, [1 9]);
 BehaviorDialog = Tdialog(GUI.window{P.PlotParamsBehavior.Page,P.PlotParamsBehavior.DialogWindow});
 
 
-uimenu('Parent',GUI.FileMenu,'Label','load session',...
-       'Callback', @(source,event)GUI_LoadMenu_Callback(source, event, GUI, EXP, P, SpatialMapsDialog, DecodingDialog, BehaviorDialog));
+uimenu('Parent',GUI.FileMenu,'Label','load VR session',...
+       'Callback', @(source,event)GUI_LoadVRMenu_Callback(source, event, GUI, EXP, P, SpatialMapsDialog, DecodingDialog, BehaviorDialog));
 uimenu('Parent',GUI.FileMenu,'Label','save file',...
        'Callback',@(source,event)GUI_SaveMenu_Callback(source,event,EXP, P));
 uimenu('Parent',GUI.FileMenu,'Label','load processed file',...
@@ -77,11 +52,12 @@ end
 
 % % *************************Callback functions***************************** %
 
-function GUI_LoadMenu_Callback(source, event, GUI, EXP, P, SpatialMapsDialog, DecodingDialog, BehaviorDialog)
+function GUI_LoadVRMenu_Callback(source, event, GUI, EXP, P, SpatialMapsDialog, DecodingDialog, BehaviorDialog)
 %get animal name
 %update the name and loading parameters used in the figure title
 %[animalname, iseries, iexplist, processedfiles] = Aman's function;
 % LoadandRun(EXP, animalname, iseries, iexplist, processedfiles);
+LoadVRData(EXP, P, animalname, iseries, iexplist, processedfiles);
 figstr = [num2str(LoadParams.LoadParams.animal) ' ' num2str(LoadParams.LoadParams.iseries)];
 GUI.updateTitle(figstr);
 InstallSpatialMapsDialog(GUI, EXP, P, SpatialMapsDialog);

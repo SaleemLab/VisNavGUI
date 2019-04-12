@@ -1,4 +1,20 @@
 function LoadVRData(EXP, P, animalname, iseries, iexplist, processedfiles)
+if nargin < 2
+    shank_list = [];
+    suffix = [];
+end
+if nargin < 4
+    speed_th = 5;
+end
+if nargin < 5
+    nthetaphsbins = 0;
+end
+if nargin < 6
+    SmthTimeWindow = 150;
+end
+if nargin < 7
+    samplerate = 60;
+end
 P.LoadParams.animal = animalname;
 P.LoadParams.series = iseries;
 P.LoadParams.exp = iexplist;
@@ -12,15 +28,14 @@ if isdir([P.DIRS.data2p filesep P.LoadParams.animal filesep num2str(P.LoadParams
 %     obj.data.twophoton = true;
 elseif isdir([DIRS.multichanspikes filesep P.LoadParams.animal filesep num2str(P.LoadParams.series)])
     EXP.Nav = VRLoadMultipleExpts(P.LoadParams.animal, P.LoadParams.series, P.LoadParams.exp, 'SPIKES', P.LoadParams.Shanknum, P.LoadParams.Shanksuffix, P.LoadParams.LoadSmthTime, P.LoadParams.Samplerate);
-%     EXP.Spk = SpkLoadMultipleExpts(...);
-%     obj.data.ephys = true;
-%     obj.data.twophoton = false;
+    
+    obj.data.ephys = true;
+    obj.data.twophoton = false;
 else
-    EXP.Nav = VRLoadMultipleExpts(P.LoadParams.animal, P.LoadParams.series, P.LoadParams.exp, 'BEHAV_ONLY', P.LoadParams.Shanknum, P.LoadParams.Shanksuffix, P.LoadParams.LoadSmthTime, P.LoadParams.Samplerate);
-%     obj.data.ephys = false;
-%     obj.data.twophoton = false;
+    EXP.Nav = VRLoadMultipleExpts(obj.animal, obj.iseries, obj.exptList, 'BEHAV_ONLY', shank_list, suffix, SmthTimeWindow, samplerate);
+    obj.data.ephys = false;
+    obj.data.twophoton = false;
 end
-
 
 %if nthetaphsbins > 0, theta phase info must have been saved before by 
 %preprocessing LFP with preprocessLFP.m

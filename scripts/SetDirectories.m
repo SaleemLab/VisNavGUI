@@ -1,6 +1,7 @@
-function DIRS = SetDirectories(serverName)
+function DIRS = SetDirectories
 %set the path of directories where to find the data
 %should call a common setDirs function
+serverName = 'C:\';
 DIRS.data           = fullfile(serverName,'Data','trodes');%directory with visual stimulation protocols
 DIRS.spikes         = fullfile(serverName,'Data','Spikes');
 DIRS.EyeCamera      = fullfile(serverName,'Data','EyeCamera');%directory with eye camera recordings
