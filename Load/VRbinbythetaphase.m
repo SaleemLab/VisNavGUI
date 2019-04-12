@@ -1,4 +1,6 @@
 function es_out = VRbinbythetaphase(es_in,nthetaphsbins,chn)
+% resample by a different signal's period.
+
 sampleFrequency = 1/es_in.sampleRate;
 if isfield(es_in, 'LFPphase')
     if isempty(nthetaphsbins) || nthetaphsbins == 0
