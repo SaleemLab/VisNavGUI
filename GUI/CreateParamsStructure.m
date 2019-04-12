@@ -1,4 +1,4 @@
-function P = CreateParamsStructure
+function P = CreateParamsStructure(savedParamsFile)
 %create Parameter structure used troughout the GUI
 if ~isempty(savedParamsFile)
     Psaved = load(savedParamsFile);
