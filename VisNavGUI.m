@@ -4,11 +4,7 @@ if nargin < 1
 end
 
 %Load or create Parameter structure used troughout the GUI
-if ~isempty(savedParamsFile)
-    load(savedParamsFile,'P');
-else
-    P = CreateParamsStructure(savedParamsFile);
-end
+P = CreateParamsStructure(savedParamsFile);
 
 %create and define fields of the data structure used troughout the GUI
 EXP = CreateEXPStructure;
@@ -39,8 +35,6 @@ uimenu('Parent',GUI.FileMenu,'Label','load processed file',...
        'Callback',@(source,event)GUI_LoadProcessedMenu_Callback(source, event, GUI, EXP, P, SpatialMapsDialog, DecodingDialog, BehaviorDialog));
 
 uimenu('Parent',GUI.AnalysisMenu,'Label','Analysis Options','Callback',@(source,event)GUI_AnalysisOptions_Callback(source,event,P));
-%parameters for analyses when loading + which analysis to run when loading + load/save directories for
-%preprocessed files
 uimenu('Parent',GUI.AnalysisMenu,'Label','Compute 1D maps','Callback',@(source,event)GUI_Compute1Dmaps_Callback(source,event,P));
 uimenu('Parent',GUI.AnalysisMenu,'Label','Compute 2D maps','Callback',@(source,event)GUI_Compute2Dmaps_Callback(source,event,P));
 uimenu('Parent',GUI.AnalysisMenu,'Label','Run Bayesian decoder','Callback',@(source,event)GUI_BayesDecoder_Callback(source,event,P));
@@ -55,8 +49,10 @@ end
 function GUI_LoadVRMenu_Callback(source, event, GUI, EXP, P, SpatialMapsDialog, DecodingDialog, BehaviorDialog)
 %get animal name
 %update the name and loading parameters used in the figure title
-%[animalname, iseries, iexplist, processedfiles] = Aman's function;
+%S = FAFF(arg);
 % LoadandRun(EXP, animalname, iseries, iexplist, processedfiles);
+if ~Fprocessed
+end
 LoadVRData(EXP, P, animalname, iseries, iexplist, processedfiles);
 figstr = [num2str(LoadParams.LoadParams.animal) ' ' num2str(LoadParams.LoadParams.iseries)];
 GUI.updateTitle(figstr);
