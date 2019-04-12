@@ -1,0 +1,19 @@
+function PlotParamsBehavior = DefaultPlotParamsBehavior
+PlotParamsBehavior.PageTitle = 'VR Behavior';
+PlotParamsBehavior.Page = 3;
+PlotParamsBehavior.DialogWindow = 1;
+PlotParamsBehavior.Window = 2;
+PlotParamsBehavior.explist = 101;
+PlotParamsBehavior.PlotObjList = {'Traj x Time','Speed x Time', 'run Speed x X', 'visual Speed x X', 'eye Xpos', 'eye Ypos', 'pupil Size', 'Licks x X','Cum. Licks x X'};
+PlotParamsBehavior.speed_th = 5;
+PlotParamsBehavior.ChosenContrast = 1;
+PlotParamsBehavior.FpoolContrast = 0;
+PlotParamsBehavior.ChosenGain = 1;
+PlotParamsBehavior.FpoolGain = 0;
+PlotParamsBehavior.ChosenRoomlength = 1;
+PlotParamsBehavior.FpoolRoomlength = 0;
+PlotParamsBehavior.ChosenOutcome = 1;
+PlotParamsBehavior.FpoolOutcome = 0;
+PlotParamsBehavior.ChosenObj = {'Posterior x X'};
+PlotParamsBehavior.Plots = [];
+end

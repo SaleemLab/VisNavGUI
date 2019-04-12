@@ -1,0 +1,339 @@
+function UpdateplotBehavSpks(PlotVar,EXP,Layout)
+PlotVar.Plots = [];
+
+page = PlotVar.Page;
+win = PlotVar.Window;
+Layout.DivideWindow(page, win, size(PlotVar.ChosenObj,1)*size(PlotVar.ChosenCell,2)*size(PlotVar.ChosenContrast,2), size(PlotVar.ChosenGain,2)*size(PlotVar.ChosenRoomlength,2)*size(PlotVar.ChosenOutcome,2));
+
+nplot =  0;
+nplotfast1Dmap = 0;
+maxfast1Dmap = 0;
+
+trialID = EXP.Nav.trialID;
+for c = 1:size(PlotVar.ChosenContrast,2)
+    for g = 1:size(PlotVar.ChosenGain,2)
+        for r = 1:size(PlotVar.ChosenRoomlength,2)
+            for o = 1:size(PlotVar.ChosenOutcome,2)
+                EXP.Nav.trialID = trialID;
+                Fnoblanks = true;
+                Fnoafterblanks = true;
+                tidx = EXP.getSubsets(PlotVar.ChosenContrast(:,c),PlotVar.ChosenGain(:,g),PlotVar.ChosenRoomlength(:,r),PlotVar.ChosenOutcome(:,o),PlotVar.speed_th, Fnoblanks, Fnoafterblanks);
+                tidxAllphs = tidx;
+                trialIDnum = unique(es.trialID(tidx));
+                trialID = EXP.Nav.trialID;
+                trialID(~ismember(trialID,trialIDnum)) = 0;
+                for itr = 1:numel(trialIDnum)
+                    trialID(trialID == trialIDnum(itr)) = itr;
+                end
+                
+                for cell = 1:size(PlotVar.ChosenCell,2)                    
+                    icell = PlotVar.ChosenCell(:,cell);
+                    spktrain = EXP.Spk.spikeTrain(:,icell);
+                    spktrain = sum(spktrain,2);
+                    
+                    Fdispmat = PlotVar.Fdispmat;
+                    if Fdispmat
+                        spkidx = true(size(spktrain));
+                    else
+                        spkidx = spktrain>0;
+                    end
+                    
+                    try
+                        varX = es.(PlotVar.ChosenVarX{1})(:);
+                        varY = es.(PlotVar.ChosenVarY{1})(:);
+                    catch
+                        error('selected variable not a field of the EXP.data.es structure')
+                    end
+                    
+                    for k = 1:size(PlotVar.ChosenObj,1)
+                        wintitle = ['Cell: ' num2str(PlotVar.ChosenCell(:,cell)') ' Contrast: ' num2str(EXP.Nav.contrastValues(PlotVar.ChosenContrast(:,c)')) ' Gain: ' num2str(EXP.Nav.gainValues(PlotVar.ChosenGain(:,g)'))];
+                        Layout.subwindow{page, win, ((cell-1)*size(PlotVar.ChosenContrast,2) + (c-1))*size(PlotVar.ChosenObj,1) + k, (o-1)*size(PlotVar.ChosenGain,2) + g}.Title = wintitle;
+                                                
+                        switch PlotVar.ChosenObj{k}                            
+                            case 'Raster'
+                                nplot = nplot + 1;
+                                PlotVar.Plots{nplot} = TDataPlot(Layout.subwindow{page, win, ((cell-1)*size(PlotVar.ChosenContrast,2) + (c-1))*size(PlotVar.ChosenObj,1) + k, (o-1)*size(PlotVar.ChosenGain,2) + g});
+                                varxx = varX(tidx & EXP.Nav.outcome == 2);
+                                varyy = varY(tidx & EXP.Nav.outcome == 2);
+                                
+                                PlotBehavSpks(PlotVar.Plots{nplot}, spkidx & tidx & es.outcome == 2, varX, varY, spktrain, Fdispmat, [0 0 0]);
+                                PlotBehavSpks(PlotVar.Plots{nplot}, spkidx & tidx & es.outcome == 3, varX, varY, spktrain, Fdispmat, [1 0 0]);
+                                PlotBehavSpks(PlotVar.Plots{nplot}, spkidx & tidx & es.outcome == 4, varX, varY, spktrain, Fdispmat, [0 1 0]);
+                                PlotBehavSpks(PlotVar.Plots{nplot}, spkidx & tidx & es.outcome == 0, varX, varY, spktrain, Fdispmat, [1 0 0]);
+                                PlotBehavSpks(PlotVar.Plots{nplot}, spkidx & tidx & es.outcome == 1, varX, varY, spktrain, Fdispmat, [0 0 1]);
+                                PlotBehavSpks(PlotVar.Plots{nplot}, spkidx & tidx & es.outcome == 5, varX, varY, spktrain, Fdispmat, [0.5 0.5 0.5]);
+                            case 'fast1Dmap' 
+                                PlotVar.Plots{nplot}.PlotMatrix(x, [], repmat(map,[2 1]), [], true);
+                                
+                                varX = EXP.Nav.(PlotVar.ChosenVarX{1})(:);
+                                varX = normalise1var(varX,100,[],[0 100]);
+                                dx = 1;
+                                samplerate = 1./es.sampleSize(tidx);
+                                nbXbinsmth = round(1/(4/100));
+                                spktrain(~isnan(spktrain)) = smthInTime(spktrain(~isnan(spktrain)), mean(samplerate), 15, 'same', [], 'boxcar_centered');
+                                
+                                [map,~] = fast1Dmap(varX(tidx), spktrain(tidx), dx, samplerate,nbXbinsmth,es.CircularMaze);
+                                maxfast1Dmap = max(max(map),maxfast1Dmap);
+                                x = 1:numel(map);
+                                nplot = nplot + 1;
+                                if nplotfast1Dmap == 0
+                                    nplotfast1Dmap = nplot;
+                                    PlotVar.Plots{nplotfast1Dmap} = TDataPlot(Layout.subwindow{page, win, ((cell-1)*size(PlotVar.ChosenContrast,2) + (c-1))*size(PlotVar.ChosenObj,1) + k, (o-1)*size(PlotVar.ChosenGain,2) + g}); 
+                                end                                
+%                                 PlotVar.Plots{nplotfast1Dmap}.PlotVector(x, map, [], [], true, 'Color', 'k', 'Ylim', [0 1.1*max(map)+1*(max(map)==0)]);
+
+                                PlotVar.Plots{nplotfast1Dmap}.PlotVector(x, map, [], [], true, 'Ylim', [0 1.1*maxfast1Dmap+1*(maxfast1Dmap==0)]);
+                                
+                            case '1Dmap'
+                                nplot = nplot + 1;
+                                contidx = numel(EXP.Nav.contrastValues) + 1;%PlotVar.ChosenContrast(:,c);
+                                PlotVar.Plots{nplot} = TDataPlot(Layout.subwindow{page, ((cell-1)*size(PlotVar.ChosenContrast,2) + (c-1))*size(PlotVar.ChosenObj,1) + k, (o-1)*size(PlotVar.ChosenGain,2) + g}); 
+                                for cc = 1:size(PlotVar.ChosenContrast,1)
+                                    for gg = 1:size(PlotVar.ChosenGain,1)
+                                        for rr = 1:size(PlotVar.ChosenRoomlength,1)
+                                            for oo = 1:size(PlotVar.ChosenOutcome,1)
+                                                if sum(isnan(EXP.maps_trajPercent.trajPercent{contidx,PlotVar.ChosenGain(gg,g),PlotVar.ChosenRoomlength(rr,r),PlotVar.ChosenOutcome(oo,o)}.model.tuning(icell).meanrespModel)) == 0
+                                                    Plot1DmapSpks(PlotVar.Plots{nplot}, EXP.Spkmaps_trajPercent.map{contidx,PlotVar.ChosenGain(gg,g),PlotVar.ChosenRoomlength(rr,r),PlotVar.ChosenOutcome(oo,o)}, icell);
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            case '2DmapXSpd'
+                                cont = numel(EXP.Nav.contrastValues) + 1;
+                                map = EXP.Spkmaps_trajPercent_smthBallSpd.map{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModel;
+                                vecmean = EXP.Spkmaps_trajPercent_smthBallSpd.map{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModelXpos;
+                                vecSE = EXP.Spkmaps_trajPercent_smthBallSpd.map{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SErespModelXpos;
+                                
+                                x = 1:size(map,2);
+                                y = 1:size(map,1);
+                                
+                                nplot = nplot + 1;
+                                PlotVar.Plots{nplot} = TDataPlot(Layout.subwindow{page, win, ((cell-1)*size(PlotVar.ChosenContrast,2) + (c-1))*size(PlotVar.ChosenObj,1) + k, (o-1)*size(PlotVar.ChosenGain,2) + g});
+                                PlotVar.Plots{nplot}.palette = 'parula';%'hot';%
+                                if max(map(:)) > 0
+                                    PlotVar.Plots{nplot}.PlotMatrix(x, (y), map, [], true,'Clim',[0 max(map(:))]);
+                                    PlotVar.Plots{nplot}.PlotVector(vecmean, y, [], [], true);
+                                    PlotVar.Plots{nplot}.PlotVector(mod(vecmean+vecSE,size(map,2)), y, [], [], true);
+                                    PlotVar.Plots{nplot}.PlotVector(mod(vecmean-vecSE,size(map,2)), y, [], [], true);
+                                end
+                            case '2DmapXTheta'
+                                if isfield(es, 'LFPphase')
+                                    cont = numel(EXP.Nav.contrastValues) + 1;
+                                    map = EXP.Spkmaps_trajPercent_LFPphase2.map{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModel;
+                                    map = (map - mean(map(:)))/mean(map(:));
+                                    map = circshift(map,round(size(map,1)/2));
+                                    map = repmat(map,[2 1]);                                    
+                                    vecmean = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModelXmax;                                    
+                                    vecmean = circshift(vecmean,round(numel(vecmean)/2));
+                                    vecmean = repmat(vecmean,[2 1]);
+                                    vecSE = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SErespModelXmax;                                    
+                                    vecSE = circshift(vecSE,round(numel(vecSE)/2));
+                                    vecSE = repmat(vecSE,[2 1]);
+%                                     vecmeanphs = EXP.maps2d.trajPercent_LFPphase2{PlotVar.ChosenContrast(1,c),PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModelYpos;                                    
+%                                     vecmeanphsSE = EXP.maps2d.trajPercent_LFPphase2{PlotVar.ChosenContrast(1,c),PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SErespModelYpos;                                    
+                                    [~,imaxprec] = max(abs(vecmean-mean(vecmean)));
+                                    try
+                                        zCOM = (vecmean(imaxprec) - mean(vecmean))/vecSE(imaxprec);
+                                    catch
+                                        zCOM = NaN;
+                                    end
+                                    x = 1:size(map,2);
+                                    
+%                                     x = 1:0.1:size(map,2);
+%                                     vecmean = interp1(1:size(map,1),vecmean,1:0.1:size(map,1),'spline');
+%                                     vecSE = interp1(1:size(map,1),vecSE,1:0.1:size(map,1),'spline');
+%                                     [X0,Y0] = meshgrid(1:size(map,2),1:size(map,1));
+%                                     [Xinterp,Yinterp] = meshgrid(1:0.1:size(map,2),1:0.1:size(map,1));
+%                                     map = interp2(X0,Y0,map,Xinterp,Yinterp,'spline');
+                                    
+                                    y = linspace(0,720,size(map,1));
+                                    
+                                    nplot = nplot + 1;
+                                    PlotVar.Plots{nplot} = TDataPlot(Layout.subwindow{page, win, ((cell-1)*size(PlotVar.ChosenContrast,2) + (c-1))*size(PlotVar.ChosenObj,1) + k, (o-1)*size(PlotVar.ChosenGain,2) + g}); 
+                                    PlotVar.Plots{nplot}.palette = 'dense';%'parula';%'hot';%
+                                    if max(map(:)) > 0
+                                        PlotVar.Plots{nplot}.PlotMatrix(x, (y), map, [], true,'Clim',[min(map(:)) max(map(:))]);
+                                        PlotVar.Plots{nplot}.PlotVector(vecmean, y, [], [], true);
+                                        PlotVar.Plots{nplot}.PlotVector(mod(vecmean+vecSE,max(x)), y, [], [], true);
+                                        PlotVar.Plots{nplot}.PlotVector(mod(vecmean-vecSE,max(x)), y, [], [], true);
+                                        
+%                                         PlotVar.Plots{nplot}.PlotVector(x, vecmeanphs*360/size(map,1), [], [], true);
+%                                         PlotVar.Plots{nplot}.PlotVector(x, mod((vecmeanphs+vecmeanphsSE)*360/size(map,1),360), [], [], true);
+%                                         PlotVar.Plots{nplot}.PlotVector(x, mod((vecmeanphs-vecmeanphsSE)*360/size(map,1),360), [], [], true);
+                                    end
+                                    
+%                                     xmap = mean(map,1);
+%                                     [~,imax] = max(xmap);
+%                                     [~,fieldidx] = findfield(xmap,1);
+%                                     fieldimax = find(fieldidx == imax);
+%                                     
+%                                     fielddist_to_max = unwrap(fieldidx/numel(xmap)*2*pi)*numel(xmap)/(2*pi);
+%                                     fielddist_to_max = fielddist_to_max - fielddist_to_max(fieldimax);
+%                                     fielddist_to_max(1:fieldimax) = fielddist_to_max(1:fieldimax)/abs(min(fielddist_to_max));
+%                                     fielddist_to_max(fieldimax+1:end) = fielddist_to_max(fieldimax+1:end)/abs(max(fielddist_to_max));
+%                                     
+%                                     infielddist = NaN(numel(xmap),1);
+%                                     infielddist(fieldidx) = fielddist_to_max;
+%                                     infielddist = [infielddist;infielddist(1)];
+%                                     infielddist_diff  = diff(infielddist);
+%                                     varDist = infielddist(floor(varX)+1)+mod(varX,1).*infielddist_diff(floor(varX)+1);
+%                                     spktraintemp = spktrain;
+%                                     spktraintemp(isnan(varDist)) = 0;
+                                    
+%                                     map_xphs = map/sum(map(:))*sum(spktrain(tidxAllphs));
+%                                     [rho,pval] = circ_corrcc2(y/(numel(y)*dy)*2*pi, x/(numel(x)*dx)*2*pi, map_xphs);
+%                                     [rho,pval] = circ_corrcl(es.LFPphase2(tidxAllphs & spktraintemp>0.5,icell)/360*2*pi, varXtemp(tidxAllphs & spktraintemp>0.5));
+
+%                                     kfold = 20;
+%                                     [slope,phi0,rho,slopeSE,phi0SE,rhoSE] = circularlinearfit(es.LFPphase2(tidxAllphs & spktraintemp>0.5,icell)/360*2*pi,varDist(tidxAllphs & spktraintemp>0.5),[],kfold);
+%                                     phi0 = mod(phi0+2*pi,2*pi)*360/(2*pi);
+%                                     phi0SE = mod(phi0SE+2*pi,2*pi)*360/(2*pi);
+%                                     
+%                                     phs = repmat(2*pi/360*y',[1 numel(x)]);
+%                                     xphs = repmat(-floor(numel(xmap)/2)+1:floor(numel(xmap)/2),[numel(y) 1])/numel(fieldidx);
+%                                     phsmap = map;
+%                                     phsmap(:,~ismember(1:size(map,2),fieldidx)) = 0;
+%                                     phsmap = circshift(phsmap,-imax+floor(numel(xmap)/2),2);
+%                                     [slope,phi0,rho] = circularlinearfit(phs(:),xphs(:),phsmap(:));
+                                    
+                                    slope = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModelslopeXY;
+                                    phi0 = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModelphi0XY;
+                                    rho = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModelrhoXY;
+                                    slopeSE = quantile(EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).respModelslopeXY,0.95);
+                                    phi0SE = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SErespModelphi0XY;
+                                    rhoSE = quantile(EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).respModelrhoXY,0.95);
+                                    nShf = size(EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).respModelrhoXY,2);
+                                    rhoZpos = sum(rho > EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).respModelrhoXY)/nShf;
+                                    rhoZneg = sum(rho < EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).respModelrhoXY)/nShf;
+                                    rhoZ = min(rhoZpos,rhoZneg);
+                                    slopeZpos = sum(slope > EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).respModelslopeXY)/nShf;
+                                    slopeZneg = sum(slope < EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).respModelslopeXY)/nShf;
+                                    slopeZ = min(slopeZpos,slopeZneg);
+%                                     [map1d,x] = fast1Dmap(theta(tidxAllphs),spktrain(tidxAllphs),dy,samplerate,nbYbinsmth,false);
+                                    map1d = mean(map,2);
+                                    map_phs = map1d/sum(map1d)*sum(spktrain(tidxAllphs));
+                                    text(1,1,['rho = ' num2str(rho) ';z=' num2str(rhoZ) '  slope = ' num2str(slope) ';z=' num2str(slopeZ) '  offset = ' num2str(phi0) ';SE=' num2str(phi0SE) '     zCOM = ' num2str(zCOM)]);
+                                end
+                            case '2DmapXTheta - Correlation'
+                                if isfield(es, 'LFPphase')
+                                    cont = numel(EXP.SubsetVal.contrast) + 1;
+                                    xcorrtheta = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meancorrModelX;
+                                    Xpos = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meancorrModelXmax;
+                                    XposSE = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SEcorrModelXmax;
+                                    XposAmp = (EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meancorrModelXRefmaxsinAmp);
+                                    XposAmpShf = 0;%EXP.maps2d.trajPercent_LFPphase2_Shf{PlotVar.ChosenContrast(1,c),PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meancorrModelXRefmaxsinAmp;
+                                    XposAmpSE = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SEcorrModelXmaxsinAmp;
+                                    XposAmpShfSE = quantile(abs(EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).corrModelXmaxsinAmp),0.95);
+                                    XposOffset = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meancorrModelXRefmaxOffset;
+                                    XposOffsetSE = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SEcorrModelXmaxOffset;
+                                    
+%                                     [phs0,sinamp] = getThetaPrecPhase(Xpos);
+%                                     Phi = linspace(0,360-360/size(map,1),size(map,1))/360*2*pi;
+%                                     Xpos = (mean(Xpos) + sinamp*sin(Phi + (180-phs0)/360*2*pi))';
+                                    
+%                                     xcorrthetatemp = xcorrtheta;
+%                                     xcorrthetatemp(:,[1:25 75:100]) = 0;
+%                                     Xpos = getCircularAverage(xcorrthetatemp',0,0.1,0.05);
+                                    
+                                    zAmp = XposAmp/XposAmpSE;
+%                                     zAmpShf = XposAmp/XposAmpShfSE;%
+                                    zAmpShf = sum(abs(XposAmp) < abs(EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).corrModelXRefmaxsinAmp))/numel(EXP.maps2d.trajPercent_LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).corrModelXRefmaxsinAmp);%(XposAmp-XposAmpShf)/XposAmpShfSE;
+                                    zAmpShf2 = sum(abs(EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meancorrModelXRefmaxAmp) < abs(EXP.maps2d.trajPercent_LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).corrModelXRefmaxAmp))/numel(EXP.maps2d.trajPercent_LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).corrModelXRefmaxsinAmp);%(XposAmp-XposAmpShf)/XposAmpShfSE;
+                                    zAmpShf = zAmpShf;%min(zAmpShf,zAmpShf2);
+                                    x = 1:size(xcorrtheta,2);
+                                    y = linspace(0,360,size(xcorrtheta,1));
+%                                     x = 1:0.1:size(xcorrtheta,2);
+%                                     Xpos = interp1(1:size(xcorrtheta,1),Xpos,1:0.1:size(xcorrtheta,1),'spline');
+%                                     XposSE = interp1(1:size(xcorrtheta,1),XposSE,1:0.1:size(xcorrtheta,1),'spline');
+%                                     [X0,Y0] = meshgrid(1:size(xcorrtheta,2),1:size(xcorrtheta,1));
+%                                     [Xinterp,Yinterp] = meshgrid(1:0.1:size(xcorrtheta,2),1:0.1:size(xcorrtheta,1));
+%                                     xcorrtheta = interp2(X0,Y0,xcorrtheta,Xinterp,Yinterp,'spline');
+%                                     y = linspace(0,360,size(xcorrtheta,1));
+
+%                                     dx = 1;
+%                                     dy = 20;%5;%
+%                                     samplerate = 1./es.sampleSize(tidxAllphs);%60;
+%                                     nbXbinsmth = round(1/(PlotVar.Xbinsize/100));
+%                                     nbYbinsmth = round(1/(2/(360/dy)));
+%                                     theta = mod(es.LFPphase(:,min(end,PlotVar.thetaChannel)),360);%mod(EXP.Bayes.LFPphase,360);%es.smthBallSpd; %mod(EXP.Bayes.LFPphase(tidxAllphs),360);%mod(es.LFPphase(tidxAllphs,PlotVar.thetaChannel)-180,360)
+%                                     [map,x,y] = fast2Dmap(varX(tidxAllphs),theta(tidxAllphs),spktrain(tidxAllphs),dx,dy,samplerate,nbXbinsmth, nbYbinsmth,es.CircularMaze);
+%                                     xmap = mean(map,1);
+%                                     [~,imax] = max(xmap);
+%                                     varXtemp = mod(varX - imax + max(varX)/2,max(varX))- max(varX)/2;
+%                                     xmap = circshift(xmap,-imax+floor(numel(xmap)/2));
+%                                     qth = quantile(xmap,0.5);
+%                                     fieldstart = x(find(xmap(1:floor(numel(xmap)/2))<=mean(xmap),1,'last'))-floor(numel(xmap)/2);
+%                                     fieldend = x(find(xmap(floor(numel(xmap)/2)+1:end)<=mean(xmap),1,'first'));
+%                                     spktraintemp = spktrain;
+%                                     spktraintemp(varXtemp<=fieldstart | varXtemp>=fieldend) = 0;
+% %                                     map_xphs = map/sum(map(:))*sum(spktrain(tidxAllphs));
+% %                                     [rho,pval] = circ_corrcc2(y/(numel(y)*dy)*2*pi, x/(numel(x)*dx)*2*pi, map_xphs);
+%                                     [rho,pval] = circ_corrcc(es.LFPphase2(tidxAllphs & spktraintemp>0.5,icell)/360*2*pi, varXtemp(tidxAllphs & spktraintemp>0.5)/max(varX)*2*pi);
+% %                                     [map1d,x] = fast1Dmap(theta(tidxAllphs),spktrain(tidxAllphs),dy,samplerate,nbYbinsmth,false);
+%                                     map1d = mean(map,2);
+%                                     map_phs = map1d/sum(map1d)*sum(spktrain(tidxAllphs));
+%                                     [rtest_pval,rtest_z] = circ_rtest(y/360*2*pi,map_phs,dy/360*2*pi);
+%                                     
+% %                                     map = repmat(map,[3 1]);
+% %                                     y = [y 360+y 2*360+y];
+%                                     
+% %                                     map = EXP.maps2d.trajPercent_smthBallSpd{PlotVar.ChosenContrast(1,c),PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModel;
+% %                                     y = EXP.maps2d.trajPercent_smthBallSpd{PlotVar.ChosenContrast(1,c),PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.binsY;
+% %                                     
+%                                     map = EXP.maps2d.trajPercent_LFPphase2{PlotVar.ChosenContrast(1,c),PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModel;
+%                                     vecmean = EXP.maps2d.trajPercent_LFPphase2{PlotVar.ChosenContrast(1,c),PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModelXpos;                                    
+%                                     vecSE = EXP.maps2d.trajPercent_LFPphase2{PlotVar.ChosenContrast(1,c),PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SErespModelXpos;                                    
+                                    
+                                    nplot = nplot + 1;
+                                    PlotVar.Plots{nplot} = TDataPlot(Layout.subwindow{page, win, ((cell-1)*size(PlotVar.ChosenContrast,2) + (c-1))*size(PlotVar.ChosenObj,1) + k, (o-1)*size(PlotVar.ChosenGain,2) + g}); 
+                                    PlotVar.Plots{nplot}.palette = 'parula';%'hot';%
+                                    if max(map(:)) > 0
+                                        PlotVar.Plots{nplot}.PlotMatrix(x, (y), xcorrtheta, [], true,'Clim',[0.5 1]);
+%                                         PlotVar.Plots{nplot}.PlotMatrix(x, (y), map, [], true,'Clim',[0 max(map(:))]);
+                                        PlotVar.Plots{nplot}.PlotVector(Xpos, y, [], [], true);
+                                        PlotVar.Plots{nplot}.PlotVector(mean(Xpos)*ones(1,numel(y)), y, [], [], true);
+                                        PlotVar.Plots{nplot}.PlotVector(Xpos+XposSE, y, [], [], true);
+                                        PlotVar.Plots{nplot}.PlotVector(Xpos-XposSE, y, [], [], true,'Xlim',[40 60]);
+                                        
+%                                         PlotVar.Plots{nplot}.PlotVector(XposShf, y, [], [], true);
+%                                         PlotVar.Plots{nplot}.PlotVector(XposShf+XposShfSE, y, [], [], true);
+%                                         PlotVar.Plots{nplot}.PlotVector(XposShf-XposShfSE, y, [], [], true);
+                                    end
+                                    slope = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meancorrModelslopeXY;
+                                    phi0 = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meancorrModelphi0XY;
+                                    rho = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meancorrModelrhoXY;
+                                    slopeSE = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SEcorrModelslopeXY;
+                                    phi0SE = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SEcorrModelphi0XY;
+                                    rhoSE = EXP.maps_trajPercent_LFPphase2.trajPercent_LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SEcorrModelrhoXY;
+                                    
+                                    text(50,1,['Phsoffset = ' num2str(XposOffset) ';PhsoffsetSE=' num2str(XposOffsetSE) '  slope = ' num2str(slope) ';z=' num2str(slope/slopeSE) '  offset = ' num2str(phi0) ';SE=' num2str(phi0SE) '     zAmp = ' num2str(zAmp) '   zAmpshf = '  num2str(zAmpShf)]);
+                                end
+                            case 'Theta Mod.'
+                                cont = numel(EXP.SubsetVal.contrast) + 1;
+                                vecmean = EXP.maps_LFPphase2.LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModel;                                    
+                                vecSE = EXP.maps_LFPphase2.LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SErespModel;
+                                nplot = nplot + 1;
+                                vecmean = [vecmean vecmean(1)];
+                                vecSE = [vecSE vecSE(1)];
+                                x = linspace(0,360,numel(vecmean));
+                                PlotVar.Plots{nplot} = TDataPlot(Layout.subwindow{page, win, ((cell-1)*size(PlotVar.ChosenContrast,2) + (c-1))*size(PlotVar.ChosenObj,1) + k, (o-1)*size(PlotVar.ChosenGain,2) + g});
+                                PlotVar.Plots{nplot}.PlotVector(x, vecmean, vecSE, [], true);
+                                
+                                Amp = EXP.maps_LFPphase2.LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModelXsinAmp;
+                                AmpShf = EXP.maps_LFPphase2.LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModelXsinAmp;
+                                AmpSE = EXP.maps_LFPphase2.LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SErespModelXsinAmp;
+                                Offset = EXP.maps_LFPphase2.LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).meanrespModelXsinOffset;
+                                OffsetSE = EXP.maps_LFPphase2.LFPphase2{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).SErespModelXsinOffset;
+                                zAmp = (Amp-AmpShf)/AmpSE;
+                                nShf = numel(EXP.maps_LFPphase2.LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).respModelXsinAmp);
+                                zAmpShf = sum(abs(Amp) <= abs(EXP.maps_LFPphase2.LFPphase2_Shf{cont,PlotVar.ChosenGain(1,g),PlotVar.ChosenRoomlength(1,r),PlotVar.ChosenOutcome(1,o)}.model.tuning(icell).respModelXsinAmp))/nShf;
+                                text(1,mean(vecmean),['zAmp = ' num2str(zAmp) '   zAmpShf = ' num2str(zAmpShf) '   PhsOffset = ' num2str(Offset) '   PhsOffsetSE = ' num2str(OffsetSE)]);
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+end

@@ -1,0 +1,386 @@
+classdef Tdialog < handle
+properties
+    %number of columns which must divide the parent panel of the dialog
+    %Default is 1.
+    nbcolumn
+    %RGB MATLAB vector defining the background color of the dialog.
+    background
+    %
+    backgroundTxt
+    
+    %handle of the dialog parent panel
+    parentpanel
+    %width of the dialog parent panel
+    parentwidth
+    %height of the dialog parent panel
+    parentheight
+    %vector of handles containing all handles of the dialog uicontrol
+    uicontrolhandle
+    %cell array of names of the dialog uicontrol
+    uicontrolname
+    %vector of handles containing all handles of the uicontrol titles
+    uicontrolnamehandle
+    %relative size of uicontrols as displayed in the dialog
+    relativesize
+    %vertical spacing interval (normalized units)
+    yinterfactor
+    %horizontal spacing interval (normalized units)
+    xinterfactor
+    %height of one given uicontrol (normalized units)
+    linesize
+    %figure handle created when using shownonmodal and showmodal methods
+    modalfigure
+end
+
+properties (Hidden=true,Dependent=true)
+    %Size of a column of the dialog parent panel
+    %all units are expressed in normalized units of the parent panel
+    %size
+    columnsize
+    %
+    nbYuicontrol
+end
+
+methods
+    function obj=Tdialog(parenthandle,name,position)
+        if isempty(parenthandle)
+            f = figure('Name',name,'WindowStyle','modal','Units','normalized','Position',position);
+            obj.parentpanel = uix.CardPanel('Parent',f);
+        else
+            obj.parentpanel = parenthandle;
+        end
+        psize = get(obj.parentpanel,'Position');
+        obj.parentwidth = psize(3);
+        obj.parentheight = psize(4);
+        obj.xinterfactor = 1/60;
+        obj.yinterfactor = 1/500;
+        obj.linesize = 1/45;
+        obj.nbcolumn = 1;
+        obj.background = [0.9 0.9 0.9];
+        obj.backgroundTxt = obj.background;
+    end
+
+    function columnsize=get.columnsize(obj)
+        if obj.nbcolumn ~= 0
+            columnsize = 1/obj.nbcolumn;
+        else
+            error('bad Tdialog.nbcolumn property value');
+        end
+    end
+
+    function obj=set.background(obj,RGB)
+        obj.background = RGB;
+        set(obj.parentpanel,'BackgroundColor',obj.background);
+    end
+
+    function nbYuicontrol = get.nbYuicontrol(obj)
+        nbYuicontrol = numel(obj.uicontrolhandle);
+    end
+
+    function obj=getvariable(obj,str,varval,relsize,varargin)
+        htxtgetvar = uicontrol('Parent',obj.parentpanel,'Style','text',...
+                                 'String',str,'BackgroundColor',obj.backgroundTxt);
+
+        if nargin<5
+            varval=0;
+        end
+        hgetvar = uicontrol('Parent',obj.parentpanel,'Style','edit',...
+                            'String',num2str(varval),'BackgroundColor',obj.background,...
+                            varargin{:});
+
+        if isempty(obj.uicontrolhandle)
+            obj.uicontrolhandle = {hgetvar};
+            obj.uicontrolnamehandle = {htxtgetvar};
+            obj.uicontrolname = {str};
+            obj.relativesize = {relsize(:)'};
+        else
+            obj.uicontrolhandle = [obj.uicontrolhandle {hgetvar}];
+            obj.uicontrolnamehandle = [obj.uicontrolnamehandle {htxtgetvar}];
+            obj.uicontrolname = [obj.uicontrolname {str}];
+            obj.relativesize = [obj.relativesize {relsize(:)'}];
+        end
+        set(obj.parentpanel, 'Heights', -cell2mat(obj.relativesize), 'BackgroundColor', obj.background);
+    end
+
+    function obj=addslider(obj,minmax,dx,slideval,relsize,varargin)
+        lasthandle=length(obj.uicontrolhandle);
+        lastcallback=get(obj.uicontrolhandle{lasthandle},'Callback');
+        if nargin<4
+            slideval=minmax(1);
+        end
+        haddslider=uicontrol('Parent',obj.parentpanel,'Style','slider','Min',minmax(1),'Max',minmax(2),'Value',slideval,'SliderStep',[dx(1)/(minmax(2)-minmax(1)) dx(2)/(minmax(2)-minmax(1))],'BackgroundColor',obj.background,...
+                             'Callback',{@slider_callback},varargin{:});
+
+        function slider_callback(source,event)
+            slidevalue=get(source,'Value');
+            slidevalue=round(slidevalue/dx1)*dx1;
+            set(source,'Value',slidevalue);
+            set(obj.uicontrolhandle{lasthandle},'String',slidevalue);
+            lastcallback(obj.uicontrolhandle{lasthandle},event);
+        end
+
+        if isempty(obj.uicontrolhandle)
+            obj.uicontrolhandle = {haddslider};
+            obj.uicontrolnamehandle = {haddslider};
+            obj.uicontrolname = {[obj.uicontrolname{lasthandle} '_slider']};
+            obj.relativesize = {relsize(:)'};
+        else
+            obj.uicontrolhandle = [obj.uicontrolhandle {haddslider}];
+            obj.uicontrolnamehandle = [obj.uicontrolnamehandle {haddslider}];
+            obj.uicontrolname = [obj.uicontrolname {[obj.uicontrolname{lasthandle} '_slider']}];
+            obj.relativesize = [obj.relativesize {relsize(:)'}];
+        end
+        set(obj.parentpanel, 'Heights', -cell2mat(obj.relativesize), 'BackgroundColor', obj.background);
+    end
+
+    function obj=addgetpathbutton(obj,str,relsize,varargin)
+        lasthandle=length(obj.uicontrolhandle);
+        lastcallback=get(obj.uicontrolhandle{lasthandle},'Callback');
+        haddpathbutton = uicontrol('Parent',obj.parentpanel,'Style','pushbutton',...
+                                 'String',str,'BackgroundColor',obj.background-[0.1 0.1 0.1],...
+                                 'Callback',{@path_callback},varargin{:});
+
+        function path_callback(source,event)
+            Dirpath=uigetdir(get(obj.uicontrolhandle{lasthandle},'String'));
+            if ischar(Dirpath)
+                set(obj.uicontrolhandle{lasthandle},'String',Dirpath);
+                lastcallback(obj.uicontrolhandle{lasthandle},event);
+            end
+        end
+        if isempty(obj.uicontrolhandle)
+            obj.uicontrolhandle={haddpathbutton};
+            obj.uicontrolnamehandle = {haddpathbutton};
+            obj.uicontrolname = {str};
+            obj.relativesize = {relsize(:)'};
+        else
+            obj.uicontrolhandle=[obj.uicontrolhandle {haddpathbutton}];
+            obj.uicontrolnamehandle = [obj.uicontrolnamehandle {haddpathbutton}];
+            obj.uicontrolname = [obj.uicontrolname {str}];
+            obj.relativesize = [obj.relativesize {relsize(:)'}];
+        end
+        set(obj.parentpanel, 'Heights', -cell2mat(obj.relativesize), 'BackgroundColor', obj.background);
+    end
+
+    function obj=addgetfilebutton(obj,str,relsize,varargin)
+        lasthandle=length(obj.uicontrolhandle);
+        lastcallback=get(obj.uicontrolhandle{lasthandle},'Callback');
+        haddfilebutton = uicontrol('Parent',obj.parentpanel,'Style','pushbutton',...
+                                 'String',str,'BackgroundColor',obj.background-[0.1 0.1 0.1],...
+                                 'Callback',{@path_callback},varargin{:});
+
+        function path_callback(source,event)
+            [FileName,PathName,~]=uigetfile(get(obj.uicontrolhandle{lasthandle},'String'));
+            if ischar(FileName)
+                set(obj.uicontrolhandle{lasthandle},'String',[PathName FileName]);
+                lastcallback(obj.uicontrolhandle{lasthandle},event);
+            end
+        end
+        if isempty(obj.uicontrolhandle)
+            obj.uicontrolhandle={haddfilebutton};
+            obj.uicontrolnamehandle = {haddfilebutton};
+            obj.uicontrolname = {str};
+            obj.relativesize = {relsize(:)'};
+        else
+            obj.uicontrolhandle=[obj.uicontrolhandle {haddfilebutton}];
+            obj.uicontrolnamehandle = [obj.uicontrolnamehandle {haddfilebutton}];
+            obj.uicontrolname = [obj.uicontrolname {str}];
+            obj.relativesize = [obj.relativesize {relsize(:)'}];
+        end
+        set(obj.parentpanel, 'Heights', -cell2mat(obj.relativesize), 'BackgroundColor', obj.background);
+    end
+
+
+    function obj=getpushbutton(obj,str,relsize,varargin)
+        hgetpushbutton = uicontrol('Parent',obj.parentpanel,'Style','pushbutton',...
+                                 'String',str,'BackgroundColor',obj.background-[0.1 0.1 0.1]);            
+
+        if isempty(obj.uicontrolhandle)
+            obj.uicontrolhandle={hgetpushbutton};
+            obj.uicontrolnamehandle = {hgetpushbutton};
+            obj.uicontrolname = {str};
+            obj.relativesize = {relsize(:)'};
+        else
+            obj.uicontrolhandle=[obj.uicontrolhandle {hgetpushbutton}];
+            obj.uicontrolnamehandle = [obj.uicontrolnamehandle {hgetpushbutton}];
+            obj.uicontrolname = [obj.uicontrolname {str}];
+            obj.relativesize = [obj.relativesize {relsize(:)'}];
+        end
+        set(obj.parentpanel, 'Heights', -cell2mat(obj.relativesize), 'BackgroundColor', obj.background);
+    end
+
+    function obj=getpopupmenu(obj,title,strval,choice0,relsize,varargin)
+        choice1=0;
+        for k=1:size(strval,2)
+            if strcmp(choice0,strval{k})
+                choice1=k;
+            end
+        end
+        if choice1==0
+            choice1=1;
+        end
+
+        htxtpopupmenu = uicontrol('Parent',obj.parentpanel,'Style','text',...
+                                 'String',title,'BackgroundColor',obj.backgroundTxt);
+
+        hpopupmenu=uicontrol('Parent',obj.parentpanel,'Style','popupmenu',...
+                            'String',strval,'Value',choice1,'BackgroundColor',obj.background,...
+                            varargin{:});
+
+        if isempty(obj.uicontrolhandle)
+            obj.uicontrolhandle={hpopupmenu};
+            obj.uicontrolnamehandle = {htxtpopupmenu};
+            obj.uicontrolname = {title};
+            obj.relativesize = {relsize(:)'};
+        else
+            obj.uicontrolhandle=[obj.uicontrolhandle {hpopupmenu}];
+            obj.uicontrolnamehandle = [obj.uicontrolnamehandle {htxtpopupmenu}];
+            obj.uicontrolname = [obj.uicontrolname {title}];
+            obj.relativesize = [obj.relativesize {relsize(:)'}];
+        end   
+        set(obj.parentpanel, 'Heights', -cell2mat(obj.relativesize), 'BackgroundColor', obj.background);
+    end
+
+    function obj=getlistbox(obj,title,strval,relsize,varargin)
+       htxtlistbox = uicontrol('Parent',obj.parentpanel,'Style','text',...
+                                 'String',title,'BackgroundColor',obj.backgroundTxt);
+
+       hlistbox=uicontrol('Parent',obj.parentpanel,'Style','listbox',...
+                            'String',strval,'BackgroundColor',obj.background,...
+                            varargin{:});
+
+        if isempty(obj.uicontrolhandle)
+            obj.uicontrolhandle={hlistbox};
+            obj.uicontrolnamehandle = {htxtlistbox};
+            obj.uicontrolname = {title};
+            obj.relativesize = {relsize(:)'};
+        else
+            obj.uicontrolhandle=[obj.uicontrolhandle {hlistbox}];
+            obj.uicontrolnamehandle = [obj.uicontrolnamehandle {htxtlistbox}];
+            obj.uicontrolname = [obj.uicontrolname {title}];
+            obj.relativesize = [obj.relativesize {relsize(:)'}];
+        end
+        set(obj.parentpanel, 'Heights', -cell2mat(obj.relativesize), 'BackgroundColor', obj.background);
+    end
+
+    function obj=getcheckbox(obj,title,val,relsize,varargin)        
+        hgetcheckbox = uicontrol('Parent',obj.parentpanel,'Style','checkbox',...
+                                 'String',title,'Min',0,'Max',1,'BackgroundColor',obj.background,...
+                                 'Value',val,varargin{:});            
+
+        if isempty(obj.uicontrolhandle)
+            obj.uicontrolhandle = {hgetcheckbox};
+            obj.uicontrolnamehandle = {hgetcheckbox};
+            obj.uicontrolname = {title};
+            obj.relativesize = {relsize(:)'};
+        else
+            obj.uicontrolhandle = [obj.uicontrolhandle {hgetcheckbox}];
+            obj.uicontrolnamehandle = [obj.uicontrolnamehandle {hgetcheckbox}];
+            obj.uicontrolname = [obj.uicontrolname {title}];
+            obj.relativesize = [obj.relativesize {relsize(:)'}];
+        end
+        set(obj.parentpanel, 'Heights', -cell2mat(obj.relativesize), 'BackgroundColor', obj.background);
+    end
+
+
+    function obj = settext(obj,title,str,relsize,varargin)
+        htxtsettext = uicontrol('Parent',obj.parentpanel,'Style','text',...
+                            'String',title);
+        
+        hsettext=uicontrol('Parent',obj.parentpanel,'Style','listbox','Enable','off',...
+                            'String',str,'BackgroundColor',obj.background,varargin{:});
+
+        if isempty(obj.uicontrolhandle)
+            obj.uicontrolhandle = {hsettext};
+            obj.uicontrolnamehandle = {htxtsettext};
+            obj.uicontrolname = {title};
+            obj.relativesize = {relsize(:)'};
+        else
+            obj.uicontrolhandle = [obj.uicontrolhandle {hsettext}];
+            obj.uicontrolnamehandle = [obj.uicontrolnamehandle {htxtsettext}];
+            obj.uicontrolname = [obj.uicontrolname {title}];
+            obj.relativesize = [obj.relativesize {relsize(:)'}];
+        end
+        set(obj.parentpanel, 'Heights', -cell2mat(obj.relativesize), 'BackgroundColor', obj.background);
+    end  
+    
+    function obj = UpdateUIcontrol(obj,line,varargin)
+        if ischar(line)
+            num = 0;
+            Fmatch = false;
+            while ~Fmatch
+                num = num + 1;
+                Fmatch = isequal(obj.uicontrolname{num},line);                
+            end
+            set(obj.uicontrolhandle{num},varargin{:});
+        else
+            set(obj.uicontrolhandle{line},varargin{:});
+        end        
+    end
+    
+    function obj = DeleteUIcontrol(obj,line,varargin)
+        if ischar(line)
+            num = 0;
+            Fmatch = false;
+            while ~Fmatch
+                num = num + 1;
+                Fmatch = isequal(obj.uicontrolname{num},line);                
+            end
+            delete(obj.uicontrolhandle{num});
+            delete(obj.uicontrolnamehandle{num});
+            obj.uicontrolhandle(num) = [];
+            obj.uicontrolnamehandle(num) = [];
+            obj.uicontrolname(num) = [];
+            obj.relativesize(num) = [];
+        elseif isnumeric(line)
+            delete(obj.uicontrolhandle{line});
+            delete(obj.uicontrolnamehandle{line});
+            obj.uicontrolhandle(line) = [];
+            obj.uicontrolnamehandle(line) = [];
+            obj.uicontrolname(line) = [];
+            obj.relativesize(line) = [];
+        else
+            error('Input to DeleteUIcontrol should be a string or a scalar');
+        end
+        set(obj.parentpanel, 'Heights', -cell2mat(obj.relativesize), 'BackgroundColor', obj.background);
+    end
+    
+    function obj = reset(obj)
+        if ~isempty((obj.uicontrolhandle))
+            for num = 1:length(obj.uicontrolhandle)
+                delete(obj.uicontrolhandle{num});
+                delete(obj.uicontrolnamehandle{num});
+            end
+            obj.uicontrolhandle = [];
+            obj.uicontrolnamehandle = [];
+            obj.uicontrolname = [];
+            obj.relativesize = [];
+        end
+    end
+end
+    
+methods (Hidden = true)
+    function obj=updatepanelHeight(obj)
+        last=length(obj.uicontrolhandle);
+        set(obj.parentpanel,'Units','pixels');
+        for k=1:last
+            set(obj.uicontrolhandle(k),'Units','pixels');
+        end
+        poslast=get(obj.uicontrolhandle(last),'Position');
+        bottom=poslast(2);
+        for k=1:length(obj.uicontrolhandle)
+            pos=get(obj.uicontrolhandle(k),'Position');
+            pos(2)=pos(2)-bottom;
+            set(obj.uicontrolhandle(k),'Position',pos);
+        end
+
+        pos=get(obj.parentpanel,'Position');
+        pos(4)=pos(4)-bottom;
+        set(obj.parentpanel,'Position',pos);
+
+        set(obj.parentpanel,'Units','normalized');
+        for k=1:length(obj.uicontrolhandle)
+            set(obj.uicontrolhandle(k),'Units','normalized')
+        end
+    end
+end    
+end
