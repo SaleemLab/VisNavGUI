@@ -34,7 +34,7 @@ for iexp = 1:numel(S.explist)
     %[Nav, Spk, Vis, Eye with zero correction, clockfactor] = SynchSignals(SynchTimesRef,Nav, Spk, Vis, Eye);
     
     if ~isempty(S.VR_path{iexp,1})
-        %Nav = LoadNavData(S.VR_path{iexp,1},sampleTimes,Nav_zerocorrection);
+        %Nav = Wheelload(S.VR_path{iexp,1},sampleTimes,Nav_zerocorrection);
     end
     if ~isempty(S.ephys_path{iexp,1})
         %Spk = getSpikes(S.ephys_path{iexp,1},sampleTimes,Spk_zerocorrection)
