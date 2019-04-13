@@ -34,7 +34,10 @@ for iexp = 1:numel(S.explist)
     [Nav_correction, Spk_correction, Vis_correction, Eye_correction] = SynchSignals(Nav_SynchSignal, Spk_SynchSignal, Lfp_SynchSignal, Vis_SynchSignal, Eye_SynchSignal, SynchTimesRef);
     
     if ~isempty(S.VR_path{iexp,1})
+
         Nav = LoadNav(S.VR_path{iexp,1}, P.LoadParams.LoadSmthTime, sampleTimes, Nav_zerocorrection);
+
+        %Nav = LoadNavData(S.VR_path{iexp,1},sampleTimes,Nav_zerocorrection);
     end
     if ~isempty(S.ephys_path{iexp,1})
         Spk = LoadSpk(S.ephys_path{iexp,1},P.LoadParams.Channels,sampleTimes,Spk_zerocorrection);
