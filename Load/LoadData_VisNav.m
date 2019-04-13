@@ -33,7 +33,7 @@ for iexp = 1:numel(S.explist)
     
     if ~isempty(S.VR_path{iexp,1})
         [Nav_ZeroCorrection, Nav_RateCorrection] = SynchSignals(SynchTimesRef, Nav_SynchSignal);
-        Nav = LoadNav(S.VR_path{iexp,1}, P.LoadParams.LoadSmthTime, sampleTimes, Nav_ZeroCorrection, Nav_RateCorrection);
+        Nav = LoadNavData(S.VR_path{iexp,1}, P.LoadParams.LoadSmthTime, sampleTimes, Nav_ZeroCorrection, Nav_RateCorrection);
         EXP.Nav = combineTwoexpts(EXP.Nav, Nav);
         %Nav = LoadNavData(S.VR_path{iexp,1},sampleTimes,Nav_zerocorrection);
         %Nav = Wheelload(S.VR_path{iexp,1},sampleTimes,Nav_zerocorrection);

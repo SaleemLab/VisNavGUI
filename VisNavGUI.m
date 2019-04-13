@@ -47,13 +47,12 @@ end
 % % *************************Callback functions***************************** %
 
 function GUI_LoadVRMenu_Callback(source, event, GUI, EXP, P, SpatialMapsDialog, DecodingDialog, BehaviorDialog)
-%get animal name
-%update the name and loading parameters used in the figure title
+%
 %S = FAFF(arg);
 % LoadandRun(EXP, animalname, iseries, iexplist, processedfiles);
 if ~Fprocessed
 end
-LoadVRData(EXP, P, animalname, iseries, iexplist, processedfiles);
+LoadData_VisNav(EXP, P, S);
 figstr = [num2str(LoadParams.LoadParams.animal) ' ' num2str(LoadParams.LoadParams.iseries)];
 GUI.updateTitle(figstr);
 InstallSpatialMapsDialog(GUI, EXP, P, SpatialMapsDialog);
