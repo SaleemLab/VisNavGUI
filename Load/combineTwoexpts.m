@@ -1,4 +1,4 @@
-function es = combineTwoexpts(es, es2)
+function es = combineTwoExpts(es, es2)
 if isempty(es)
     es = es2;
 else
