@@ -31,29 +31,30 @@ for iexp = 1:numel(S.explist)
         end
     end
     
-    [Nav_correction, Spk_correction, Vis_correction, Eye_correction] = SynchSignals(Nav_SynchSignal, Spk_SynchSignal, Lfp_SynchSignal, Vis_SynchSignal, Eye_SynchSignal, SynchTimesRef);
-    
     if ~isempty(S.VR_path{iexp,1})
-        Nav = LoadNav(S.VR_path{iexp,1}, P.LoadParams.LoadSmthTime, sampleTimes, Nav_zerocorrection);
-
+        [Nav_ZeroCorrection, Nav_RateCorrection] = SynchSignals(SynchTimesRef, Nav_SynchSignal);
+        Nav = LoadNav(S.VR_path{iexp,1}, P.LoadParams.LoadSmthTime, sampleTimes, Nav_ZeroCorrection, Nav_RateCorrection);
+        EXP.Nav = combineTwoexpts(EXP.Nav, Nav);
         %Nav = LoadNavData(S.VR_path{iexp,1},sampleTimes,Nav_zerocorrection);
         %Nav = Wheelload(S.VR_path{iexp,1},sampleTimes,Nav_zerocorrection);
     end
     if ~isempty(S.ephys_path{iexp,1})
-        Spk = LoadSpk(S.ephys_path{iexp,1},P.LoadParams.Channels,sampleTimes,Spk_zerocorrection);
-        %Lfp = getLFP(Lfp)
+        [Spk_ZeroCorrection, Spk_RateCorrection] = SynchSignals(SynchTimesRef, Spk_SynchSignal);
+        Spk = LoadSpk(S.ephys_path{iexp,1}, sampleTimes, Spk_ZeroCorrection, Spk_RateCorrection, P.LoadParams.Channels, 'good', {'icell','id'});
+        EXP.Spk = combineTwoexpts(EXP.Spk, Spk);
+        %Lfp = LoadLFP(Lfp)
+        %EXP.Lfp = combineTwoexpts(EXP.Lfp, Lfp);
     end
     if ~isempty(S.vis_path{iexp,2})
+        [Vis_ZeroCorrection, Vis_RateCorrection] = SynchSignals(SynchTimesRef, Vis_SynchSignal);
         %Vis = getBonvision(Vis)
+        %EXP.Vis = combineTwoexpts(EXP.Vis, Vis);
     end
     if ~isempty(S.eye_path{iexp,2})
+        [Eye_ZeroCorrection, Eye_RateCorrection] = SynchSignals(SynchTimesRef, Eye_SynchSignal);
         %Eye = getEyetracking(Eye)
+        %EXP.Eye = combineTwoexpts(EXP.Eye, Eye);
     end
-    EXP.Nav = combineTwoexpts(EXP.Nav, Nav);
-    EXP.Spk = combineTwoexpts(EXP.Spk, Spk);
-    EXP.Lfp = combineTwoexpts(EXP.Lfp, Lfp);
-    EXP.Vis = combineTwoexpts(EXP.Vis, Vis);
-    EXP.Eye = combineTwoexpts(EXP.Eye, Eye);
 end
 
 %Then possibly resample relative to another signal with a function similar

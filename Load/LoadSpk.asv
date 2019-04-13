@@ -1,7 +1,12 @@
-function Spk = LoadSpk(Spkfilepath, sampleTimes, zerocorrection, Channels, clusterType)
+function Spk = LoadSpk(Spkfilepath, sampleTimes, zerocorrection, Channels, clusterType, fieldnames)
+%
 load(Spkfilepath,'TempChans');
 if ~iscell(TempChans)
     TempChans = {TempChans};
+end
+
+if nargin < 3
+    zerocorrection = 0;
 end
 if nargin < 4
     for iprobe = 1:numel(TempChans)
@@ -11,9 +16,13 @@ end
 if nargin < 5
     clusterType = '';
 end
+if nargin < 6
+    fieldnames = {};
+end
 %would be nice to also have the cluster properties saved in that file
 
-%Selecting the requested cells as indicated by channel
+%Selecting the requested cells as indicated by Channels and clusterType and
+%filling the fields of the Spk structure
 icell = 0;
 for iprobe = 1:numel(TempChans)
     if ~isnan(sum(Channels{iprobe}))
@@ -22,16 +31,19 @@ for iprobe = 1:numel(TempChans)
                 if isempty(clusterType) || ~isempty(strfind(TempChans(ichan).id,clusterType))
                     icell = icell + 1;
                     Spk.spikeIDs{icell} = TempChans(ichan).id;
-                    Spk.spikeIDs{icell} = TempChans(ichan).id;
                     Spk.chanIDs{icell} = TempChans(ichan).ichan;
                     Spk.ProbeIDs{icell} = iprobe;
                     Spk.spikeTimes{icell} = TempChans(ichan).spiketimes - zerocorrection;
                     Spk.spikeTimes{icell}(Spk.spikeTimes{icell}<0) = [];
+                    for k = 1:numel(fieldnames)
+                        Spk.
+                    end
                 end
             end
         end
     end
 end
+
 samplerate = mean(diff(sampleTimes));
 Spk.spikeTrain = zeros(length(sampleTimes), numel(Spk.spikeTimes));
 for icell = 1:numel(Spk.spikeTimes)
