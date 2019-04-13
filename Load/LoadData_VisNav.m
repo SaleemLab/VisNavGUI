@@ -6,38 +6,38 @@ P.LoadParams.exp = S.explist;
 %load synch files
 for iexp = 1:numel(S.explist)
     if ~isempty(S.VR_path{iexp,2})
-        Nav.SynchSignal = GetSynchTimes(S.VR_path{iexp,2}, signalType);
-        if strcmp(P.LoadParams.SynchRef,'VR')
-            SynchTimesRef = Nav.SynchTimes;
+        Nav_SynchSignal = GetSynchSignal(S.VR_path{iexp,2}, P.LoadParams.SynchType);
+        if strcmp(P.LoadParams.SynchSignalRef,'VR')
+            SynchTimesRef = Nav_SynchTimes;
         end
     end
     if ~isempty(S.ephys_path{iexp,2})
-        Spk.SynchSignal = GetSynchTimes(S.ephys_path{iexp,2}, signalType);
-        Lfp.SynchSignal = GetSynchTimes(S.ephys_path{iexp,2}, signalType);
-        if strcmp(P.LoadParams.SynchRef,'ephys')
-            SynchTimesRef = Spk.SynchTimes;
+        Spk_SynchSignal = GetSynchSignal(S.ephys_path{iexp,2}, P.LoadParams.SynchType);
+        Lfp_SynchSignal = GetSynchSignal(S.ephys_path{iexp,2}, P.LoadParams.SynchType);
+        if strcmp(P.LoadParams.SynchSignalRef,'ephys')
+            SynchTimesRef = Spk_SynchTimes;
         end
     end
     if ~isempty(S.vis_path{iexp,2})
-        Vis.SynchSignal = GetSynchTimes(S.vis_path{iexp,2}, signalType);
-        if strcmp(P.LoadParams.SynchRef,'BonV')
-            SynchTimesRef = Vis.SynchTimes;
+        Vis_SynchSignal = GetSynchSignal(S.vis_path{iexp,2}, P.LoadParams.SynchType);
+        if strcmp(P.LoadParams.SynchSignalRef,'BonV')
+            SynchTimesRef = Vis_SynchTimes;
         end
     end
     if ~isempty(S.eye_path{iexp,2})
-        Eye.SynchSignal = GetSynchTimes(S.eye_path{iexp,2}, signalType);
-        if strcmp(P.LoadParams.SynchRef,'eye')
-            SynchTimesRef = Eye.SynchTimes;
+        Eye_SynchSignal = GetSynchSignal(S.eye_path{iexp,2}, P.LoadParams.SynchType);
+        if strcmp(P.LoadParams.SynchSignalRef,'eye')
+            SynchTimesRef = Eye_SynchTimes;
         end
     end
     
-    %[Nav, Spk, Vis, Eye with zero correction, clockfactor] = SynchSignals(SynchTimesRef,Nav, Spk, Vis, Eye);
+    [Nav_correction, Spk_correction, Vis_correction, Eye_correction] = SynchSignals(Nav_SynchSignal, Spk_SynchSignal, Lfp_SynchSignal, Vis_SynchSignal, Eye_SynchSignal, SynchTimesRef);
     
     if ~isempty(S.VR_path{iexp,1})
-        %Nav = Wheelload(S.VR_path{iexp,1},sampleTimes,Nav_zerocorrection);
+        Nav = LoadNav(S.VR_path{iexp,1}, P.LoadParams.LoadSmthTime, sampleTimes, Nav_zerocorrection);
     end
     if ~isempty(S.ephys_path{iexp,1})
-        %Spk = getSpikes(S.ephys_path{iexp,1},sampleTimes,Spk_zerocorrection)
+        Spk = LoadSpk(S.ephys_path{iexp,1},P.LoadParams.Channels,sampleTimes,Spk_zerocorrection);
         %Lfp = getLFP(Lfp)
     end
     if ~isempty(S.vis_path{iexp,2})

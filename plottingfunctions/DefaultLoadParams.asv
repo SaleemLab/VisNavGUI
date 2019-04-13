@@ -3,8 +3,11 @@ function LoadParams = DefaultLoadParams
 LoadParams.animal = 'Mxxx';
 LoadParams.series = '000';
 LoadParams.exp = 101;
-LoadParams.Channels{1} = 0:7;
-LoadParams.Channels{2} = NaN;
+nProbes = 2;
+LoadParams.Channels{1} = [0:7];
+for iprobe = 1:nProbes
+    LoadParams.Channels{iprobe} = [0:7];
+end
 LoadParams.Nthetaphsbins = 0;
 LoadParams.Samplerate = 60;
 LoadParams.LoadSmthTime = 150;
