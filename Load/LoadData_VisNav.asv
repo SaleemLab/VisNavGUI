@@ -33,14 +33,14 @@ for iexp = 1:numel(S.explist)
     
     if ~isempty(S.VR_path{iexp,1})
         [Nav_ZeroTime, Nav_relativeRate] = SynchSignals(SynchTimesRef, Nav_SynchSignal);
-        Nav = LoadNavData(S.VR_path{iexp,1}, P.LoadParams.LoadSmthTime, sampleTimes, Nav_ZeroTime, Nav_relativeRate);
+        Nav = LoadNavData(S.VR_path{iexp,1}, P.LoadParams.LoadSmthTime, sampleTimes, Nav_Zero, Nav_relativeRate);
         EXP.Nav = combineTwoexpts(EXP.Nav, Nav);
         %Nav = LoadNavData(S.VR_path{iexp,1},sampleTimes,Nav_zerocorrection);
         %Nav = Wheelload(S.VR_path{iexp,1},sampleTimes,Nav_zerocorrection);
     end
     if ~isempty(S.ephys_path{iexp,1})
         [Spk_ZeroTime, Spk_relativeRate] = SynchSignals(SynchTimesRef, Spk_SynchSignal);
-        Spk = LoadSpk(S.ephys_path{iexp,1}, sampleTimes, Spk_ZeroTime, Spk_relativeRate, P.LoadParams.Channels, 'good', {'icell','id'});
+        Spk = LoadSpk(S.ephys_path{iexp,1}, sampleTimes, Spk_Zero, Spk_RateCorrection, P.LoadParams.Channels, 'good', {'icell','id'});
         EXP.Spk = combineTwoexpts(EXP.Spk, Spk);
         %Lfp = LoadLFP(Lfp)
         %EXP.Lfp = combineTwoexpts(EXP.Lfp, Lfp);

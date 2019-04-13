@@ -1,10 +1,9 @@
-function [Signal_Zero, Signal_relativeRate] = SynchSignals(SynchRef, SynchSignal)
-%Returns the time of start of SynchRef in recording units of SynchSignal
-%and also returns the sampling rate of SynchSignal relative to SynchRef
+function [ZeroCorrection, RateCorrection] = SynchSignals(SynchRef, SynchSignal)
+%
 
-%Finding the onset of pulses
 SynchRef = SynchRef - mean(SynchRef);
 SynchSignal = SynchSignal - mean(SynchSignal);
+
 SynchTimesRef = find(diff(sign(SynchRef)) > 0);
 SynchTimes = find(diff(sign(SynchSignal)) > 0);
 
@@ -35,12 +34,13 @@ SynchCorr = SynchInt*patternRef(:);
 [~, correction] = max(SynchCorr);
 SynchIntcorrection = correction - idxRef(1) + 1;
 
-%Sampling rate of SynchSignal relative to Ratio SynchRef
+%Ratio between sampling rate of the two input signals
 SynchIntRef = diff(SynchTimesRef);
 SynchInt = diff(SynchTimes);
-Signal_relativeRate = median(SynchInt(SynchIntcorrection:(SynchIntcorrection+numel(SynchIntRef)-1),1)./SynchIntRef);
+RateCorrection = mean(SynchInt(SynchIntcorrection:(SynchIntcorrection+numel(SynchIntRef)-1),1)./SynchIntRef);
 
-%Signal_Zero expressed in recording units of SynchSignal
-Signal_Zero = SynchTimes(SynchIntcorrection) - Signal_relativeRate * SynchTimesRef(1) + 1;
+%ZeroCorrection should then be extrapolated from SynchIntcorrection to the
+%beginning of the SynchRef signal
+ZeroCorrection = SynchTimes(SynchIntcorrection) - RateCorrection * SynchTimesRef(1);
 
 end
