@@ -63,12 +63,27 @@ APSyncPulse = VRdata.TRIAL.balldata(:,:,4);
 APSyncPulse = APSyncPulse(sortIDX);
 
 lickTimes = screenTimes(lick>0);
-rewTimes = screenTimes(~isnan(reward));
+[~,idx] = (min(abs((repmat(esSync.sampleTimes,1,length(lickTimes)))...
+- (repmat(lickTimes',size(esSync.sampleTimes,1),1)))));
+esSync.lick      = zeros(size(esSync.sampleTimes));
+esSync.lick(idx) = 1;
+
+rewTimes = esSync.screenTimes(~isnan(reward));
+[~,idx] = (min(abs((repmat(esSync.sampleTimes,1,length(rewTimes)))...
+- (repmat(rewTimes',size(esSync.sampleTimes,1),1)))));
+esSync.reward      = NaN*ones(size(esSync.sampleTimes));
 
 try
     VRdata.REWARD.TYPE;
 catch
     display('Rewards are wrong')
 end
+evenSampleTime = (1/60):(1/60):max(screenTimes);
+esSync.sampleTimes = evenSampleTime';
+esSync.screenTimes = screenTimes;
+
+esSync.balldata         = interp1(esSync.screenTimes, balldata,   esSync.sampleTimes);
+esSync.APSyncPulse      = interp1(esSync.screenTimes, APSyncPulse,esSync.sampleTimes);
+
 %%
-save(outputPath, 'screenTimes', 'lick', 'reward', 'balldata', 'APSyncPulse');
+save(outputPath, 'screenTimes', 'lick', 'reward', 'balldata', 'APSyncPulse', 'esSync');
