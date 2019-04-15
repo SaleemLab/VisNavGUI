@@ -11,7 +11,6 @@ function LoadData_VisNav(EXP, P, S)
 %  - P: parameter structure. See CreateParamsStructure.
 %  - S: filepaths as returned by the FAFF function.
 %       Each field of S is n x 2 cell array of path.
-%       Rows correspond to path to different experiments. First 
 %       Rows correspond to different experiments. First 
 %       column contains path to data files; second column contains path to
 %       synchronization file.
@@ -24,10 +23,10 @@ EXP.animal = S.animalname;
 EXP.series = S.series;
 EXP.exp = S.explist;
 
-%***********Synching and loading data from selected experiments*************%
+%***********Synching and loading data from selected experiments***********%
 for iexp = 1:numel(S.explist)
     
-    %Loading Synchronization signals from the different data types
+    %Loading Synchronization signals from the different data types********%
     if ~isempty(S.Nav_path{iexp,2})
         Nav_SynchSignal = GetSynchSignal(S.Nav_path{iexp,2}, P.LoadParams.SynchType);
         if strcmp(P.LoadParams.SynchSignalRef,'VR')
@@ -59,6 +58,8 @@ for iexp = 1:numel(S.explist)
         end
     end
     
+    
+    %Loading, synching and concatenating the data*************************%
     %For each type of signal:
     %Synching signals from different data types to SynchTimesRef
     %Loading resampling and synching the data
