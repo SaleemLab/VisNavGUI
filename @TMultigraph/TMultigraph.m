@@ -25,6 +25,10 @@ properties
     permwindow
 end
 
+properties (Dependent)
+    Pagecount
+end
+
  methods
      function obj = TMultigraph(name, title, figurehandle)
          if nargin < 1
@@ -82,6 +86,10 @@ end
      function obj = deletePage(obj, pagnum)
          delete(obj.page(pagnum));
      end
+     
+     function pagecount = get.Pagecount(obj)
+         pagecount = numel(obj.page);
+      end
      
      function obj = addPermWindow(obj,str,dim)
          permwincount = numel(obj.permwindow) + 1;

@@ -1,4 +1,4 @@
-function Spk = LoadSpk(Spkfilepath, sampleTimes, ZeroCorrection, RateCorrection, Channels, clusterType, fieldnames)
+function Spk = LoadSpkData(Spkfilepath, sampleTimes, ZeroCorrection, RateCorrection, Channels, clusterType, fieldnames)
 %
 load(Spkfilepath,'TempChans');
 if ~iscell(TempChans)

@@ -1,12 +1,10 @@
-function P = CreateParamsStructure(savedParamsFile)
+function P = CreateParamsStructure(P, savedParamsFile)
 %create Parameter structure used troughout the GUI
 if ~isempty(savedParamsFile)
     Psaved = load(savedParamsFile);
 else
     Psaved = [];
 end
-
-P = Tstructure('Params');
 
 P.addprop('DatabaseFilters');
 P.DatabaseFilters = DefaultDatabaseFilters;

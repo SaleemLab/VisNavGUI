@@ -14,30 +14,22 @@ if nargin < 1
     savedParamsFile = [];
 end
 
-%***************** Create and fill the parameter structure P ************************%
-
+%***************** Create and fill  the parameterLoad  ************************%
 P = Tstructure('Params');
 P = CreateParamsStructure(P, savedParamsFile);
 
-%*********************** Create the data structure EXP ******************************%
-
+%create and define fields of the data structure used troughout the GUI
 EXP = Tstructure('Data');
 EXP = CreateEXPStructure(EXP);
 
-%************************* Create the main GUI window *******************************%
-%3 pages created right away
+%create the GUI object with 3 pages.
 %Later change this so that the number of cereated page depends on the
 %type of data that are loaded
-
 GUI = TMultigraph('VisNav');
 GUI.addPage;
 GUI.addPage;
 
-%********************** Rename pages and create dialogs ****************************%
-%3 dialogs created right away
-%Later change this so that the dialogs are created depending on the type of
-%data that are loaded
-
+%Rename pages and create the dialogs
 GUI.RenamePage(P.PlotParamsMaps.Page,P.PlotParamsMaps.PageTitle);
 GUI.Hdividepage(P.PlotParamsMaps.Page, 2, [1 9]);
 SpatialMapsDialog = Tdialog(GUI.window{P.PlotParamsMaps.Page,P.PlotParamsMaps.DialogWindow});
@@ -50,9 +42,7 @@ GUI.RenamePage(P.PlotParamsBehavior.Page,P.PlotParamsBehavior.PageTitle);
 GUI.Hdividepage(P.PlotParamsBehavior.Page, 2, [1 9]);
 BehaviorDialog = Tdialog(GUI.window{P.PlotParamsBehavior.Page,P.PlotParamsBehavior.DialogWindow});
 
-
 %***************** UIcontrols of the top menus of the main figure ************************%
-
 uimenu('Parent',GUI.FileMenu,'Label','load VR session',...
        'Callback', @(source,event)GUI_LoadVRMenu_Callback(source, event, GUI, EXP, P, SpatialMapsDialog, DecodingDialog, BehaviorDialog));
 uimenu('Parent',GUI.FileMenu,'Label','save file',...
@@ -70,9 +60,7 @@ uimenu('Parent',GUI.PlotMenu,'Label','Save Plot','Callback',@(source,event)GUI_S
 uimenu('Parent',GUI.PlotMenu,'Label','Add colorbar','Callback',@(source,event)GUI_Colorbar_Callback(source,event));
 end
 
-
 %************************* Callback functions of the top menus ***************************** %
-
 function GUI_LoadVRMenu_Callback(source, event, GUI, EXP, P, SpatialMapsDialog, DecodingDialog, BehaviorDialog)
 %
 %S = FAFF(arg);
