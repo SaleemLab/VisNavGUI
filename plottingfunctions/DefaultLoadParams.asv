@@ -1,0 +1,33 @@
+function LoadParams = DefaultLoadParams
+%Define structure with fields corresponding to loading parameters
+
+%Animal name
+LoadParams.animal = 'Mxxx';
+
+%Series name
+LoadParams.series = '000';
+
+%experiment list
+LoadParams.exp = 101;
+
+%Active channels as n x 1 cell array where n = number of probes
+LoadParams.Channels{1} = 0:7;
+LoadParams.Channels{2} = NaN;
+
+%Number of bins per cycle (could be used for theta binning or something
+%else
+LoadParams.Nthetaphsbins = 0;
+
+%Sample rate at which data should be resampled
+LoadParams.Samplerate = 60;
+
+%Time smoothing window used for some variables when loading the data (e.g.
+%smthBallSpeed)
+LoadParams.LoadSmthTime = 150;
+
+%Type of signal used to synch recordings from different sources
+LoadParams.SynchType = 'SynchPulse';
+
+%Orgin of the Synchsignal used as a reference for all 
+LoadParams.SynchSignalRef = 'VR';
+end
