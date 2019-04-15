@@ -12,6 +12,7 @@ function LoadData_VisNav(EXP, P, S)
 %  - S: filepaths as returned by the FAFF function.
 %       Each field of S is n x 2 cell array of path.
 %       Rows correspond to path to different experiments. First 
+%       Rows correspond to different experiments. First 
 %       column contains path to data files; second column contains path to
 %       synchronization file.
 
