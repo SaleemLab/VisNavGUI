@@ -1,9 +1,5 @@
-function chans = getKiloSortSpikes(animal, iseries, iexp, igroup, addInfo)
+function chans = getKiloSortSpikes(DIRname, animal, iseries, iexp, igroup, addInfo)
 % [filenum;spkevtTime;chind;elind;crossmax;unitID;unitID;chi2;sqrsum;zeros(1,numel(spkevtTime));zeros(1,numel(spkevtTime));zeros(1,numel(spkevtTime))]
-SetDefaultDirs
-% DIRS.spikes = '\\zserver\Data\Spikes';
-% DIRS.multichanspikes = '\\zserver\Data\multichanspikes';
-
 basename = [animal '_s' num2str(iseries) '_1'];
 basenameKiloSort = [animal '_s' num2str(iseries) '_1'];
 if nargin>4
@@ -13,7 +9,6 @@ if nargin>4
     end
 end
 
-DIRname  = [DIRS.multichanspikes filesep animal filesep num2str(iseries) filesep];
 if isdir([DIRname addInfo filesep 'tet' num2str(igroup)])
     load([DIRname addInfo filesep basename]);
     KiloSortFile_times = [DIRname addInfo filesep 'Kilosort' filesep 'tet' num2str(igroup) filesep 'spike_times.npy'];

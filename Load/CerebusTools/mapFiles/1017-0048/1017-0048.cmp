@@ -1,0 +1,33 @@
+// Cerebus mapping for array 1017-0048						
+//							
+// Data is as follows 'c r b e l'							
+//   c - 0 based column from left to right							
+//   r - 0 based row from bottom to top							
+//   b - bank name - values can be A, B, C, or D							
+//   e - 1 based electrode number within the bank - values can be 1-32							
+//   l - label used to rename channels in Central							
+//							
+// Comments begin with //							
+// First non-comment line is the Mapfile description							
+//							
+Cerebus mapping	
+4	0	A	20	elec20			
+4	1	A	19	elec19			
+4	2	A	18	elec18					
+4	3	A	17	elec17							
+3	0	A	16	elec16			
+3	1	A	15	elec15			
+3	2	A	14	elec14					
+3	3	A	13	elec13	
+2	0	A	12	elec12			
+2	1	A	11	elec11			
+2	2	A	10	elec10					
+2	3	A	9	elec9	
+1	0	A	8	elec8			
+1	1	A	7	elec7			
+1	2	A	6	elec6					
+1	3	A	5	elec5			
+0	0	A	4	elec4			
+0       1       A       3       elec3
+0	2	A	2	elec2			
+0	3	A	1	elec1			

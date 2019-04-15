@@ -1,8 +1,4 @@
-function chans = getKwikSpikes(animal, iseries, iexp, igroup, addInfo)
-
-SetDefaultDirs;
-% DIRS.spikes = '\\zserver\Data\Spikes';
-% DIRS.multichanspikes = '\\zserver\Data\multichanspikes';
+function chans = getKwikSpikes(DIRname, animal, iseries, iexp, igroup, addInfo)
 
 basename = [animal '_s' num2str(iseries) '_1'];
 basenamekwik = [animal '_s' num2str(iseries) '_1'];
@@ -12,20 +8,20 @@ if nargin>4
         basenamekwik = [animal '_s' num2str(iseries) '_' addInfo];
     end
 end
-DIRname  = [DIRS.multichanspikes filesep animal filesep num2str(iseries) filesep];
-if isdir([DIRname addInfo])    
-    load([DIRname addInfo filesep basename]);
-    if isdir([DIRname addInfo filesep 'tet' num2str(igroup)])
-        kwikFile = [DIRname addInfo filesep 'tet' num2str(igroup) filesep basenamekwik '_tet' num2str(igroup) '.kwik'];
-        clusterinfoFile = [DIRname addInfo filesep 'tet' num2str(igroup) filesep basenamekwik '_tet' num2str(igroup) '_clusterinfo.mat'];
+
+if isfolder([DIRname filesep addInfo])
+    load([DIRname filesep addInfo filesep basename]);
+    if isdir([DIRname filesep addInfo filesep 'tet' num2str(igroup)])
+        kwikFile = [DIRname filesep addInfo filesep 'tet' num2str(igroup) filesep basenamekwik '_tet' num2str(igroup) '.kwik'];
+        clusterinfoFile = [DIRname filesep addInfo filesep 'tet' num2str(igroup) filesep basenamekwik '_tet' num2str(igroup) '_clusterinfo.mat'];
     else
-        kwikFile = [DIRname addInfo filesep basenamekwik '.kwik'];
-        clusterinfoFile = [DIRname addInfo filesep basenamekwik '_clusterinfo.mat'];
+        kwikFile = [DIRname filesep addInfo filesep basenamekwik '.kwik'];
+        clusterinfoFile = [DIRname filesep addInfo filesep basenamekwik '_clusterinfo.mat'];
     end
     igroupfile = 0;
 else
-    load([DIRname basename]);
-    kwikFile = [DIRname basenamekwik '.kwik'];
+    load([DIRname filesep basename]);
+    kwikFile = [DIRname filesep basenamekwik '.kwik'];
     igroupfile = igroup;
 end
 
@@ -59,7 +55,7 @@ try
 catch
     sampleRate = double((temp.Attributes(3).Value));
 end
-spkTimes = double(spkTimes)./sampleRate;
+spkTimes = double(spkTimes);%./sampleRate;
 
 noise_list = [];
 

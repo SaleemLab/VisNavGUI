@@ -1,0 +1,125 @@
+function create998MC(animal,iseries,iexp)
+% CREATE998MC
+
+% still pretty slow: would be best to copy Zaharia's code for copying the
+% files to the local TMP directory.
+
+% other problems: assumes 32 chans, etcetera.
+
+% made it work with 
+% animal = 'M110320TS'
+% iseries = 4
+% iexp = 7
+% but the electrode assignment is still off (make an object?)
+
+global PICK pepNEV
+
+if nargin < 3
+    animal  = PICK.animal;
+    iseries = PICK.iseries;
+    iexp    = PICK.iexp;
+end
+
+p = ProtocolLoad(animal, iseries, iexp);
+
+% this works for data saved repeat by repeat
+NevDir = fullfile(DIRS.Cerebus, animal, num2str(iseries), num2str(iexp));
+NevFiles = dir( fullfile(NevDir, sprintf('%s_%d_%d_*.nev',animal,iseries,iexp) ) );
+ExptDate = NevFiles(1).date;
+
+nrepeats = length(NevFiles);
+nrepeats = min(nrepeats,p.nrepeats);
+
+nchans = 32; % MAGIC!! We already know there are 32 channels
+% (rather, it should read the number of channels from the first file, 
+% see nevopen or nevwaves to see how)
+
+ChanOffset = 100; % add 100 to all channel names (another HACK)
+% (would be better to know the shape of the array...)
+
+%% load the data
+
+SpikeTimes = cell(p.nstim, nrepeats, nchans);
+stimdurs = zeros(p.nstim,nrepeats);
+% TotNSpikes = zeros(nchans,1);
+% AverageWaveForm = zeros(48,nchans); % this assumes the waveforms are 48 samples long...
+
+for irepeat = 1:nrepeats
+    
+    NevFileName = sprintf('%s_%d_%d_%d.nev',animal,iseries,iexp,irepeat);
+    nevopen_outcome = nevopen(fullfile(NevDir,NevFileName));
+    
+    if ~nevopen_outcome, error('create998:FileOpenError','Could not open file!'); end
+    
+    fprintf('Loading spikes for repeat %d/%d -- ',irepeat,nrepeats);
+    
+    SyncTimes = pepNEV.sync.timestamps/30;
+    
+    TT1 = zeros(p.nstim,1);
+    TT2 = zeros(p.nstim,1);
+    for istim = 1:p.nstim
+        ipres = p.seqnums(istim,irepeat)-p.nstim*(irepeat-1);
+        TT1(istim,1) = SyncTimes(2*ipres-1);
+        TT2(istim,1) = SyncTimes(2*ipres+0);
+    end
+    
+    stimdurs(:,irepeat) = (TT2 - TT1); % in milliseconds    for ichan = 1:nchans
+    if any(stimdurs(:,irepeat)==0), break; end
+    
+    for ichan = 1:nchans
+                
+        tt = nevwaves(ichan);             % was [tt, waveforms]
+        
+        nspikes = length(tt);        
+        fprintf('%d ; ',nspikes);
+        
+        if nspikes > 0            
+            
+            % AverageWaveForm(:,ichan) = AverageWaveForm(:,ichan) + sum(waveforms,2);
+            % TotNSpikes(ichan) =  TotNSpikes(ichan) + nspikes;
+
+            TheseTimes = tt/30;
+                       
+            for istim = 1:p.nstim
+                jj = (TheseTimes>TT1(istim)) & (TheseTimes<=TT2(istim));
+                SpikeTimes{istim,irepeat,ichan} = ((TheseTimes( jj )-TT1(istim))./1000)'; % convert from milliseconds to seconds
+            end
+        end
+    end
+    fprintf('\n');
+    
+    nevclose;
+end
+
+%% Save the units
+
+for ichan = 1:nchans
+    % UnitFileName = UnitGetFilename( animal, iseries, iexp, ichan+ChanOffset, 998 );
+    % if exist(UnitFileName,'file'), error('create998:FUnitExistsError','Unit 998 already exists!'); end
+
+    unit = UnitCreate;
+    unit.animal     = p.animal;
+    unit.iseries    = p.iseries;
+    unit.iexp       =  p.iexp;
+    unit.ichan      = ichan+ChanOffset; % electrode number
+    unit.icell      = 998;
+    unit.stimdurs   = stimdurs./1000;
+    unit.timestamp  = ExptDate;
+    unit.spiketimes = cell(p.nstim,nrepeats);
+    for istim = 1:p.nstim
+        for irepeat = 1:nrepeats
+            unit.spiketimes{istim, irepeat} = SpikeTimes{istim, irepeat, ichan};
+        end
+    end
+    
+    unit.datatype = 'spiketimes';
+    unit.source = 'Original NEV file';
+
+    % unit.prototype = AverageWaveForm(:,ichan)/ TotNSpikes(ichan);
+
+    UnitSave(unit,DIRS.spikes);
+
+end % for ichan
+
+fprintf('**************** ¡¡¡DONE!!! ****************\n');
+

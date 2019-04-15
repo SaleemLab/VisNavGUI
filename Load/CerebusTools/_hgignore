@@ -1,0 +1,7 @@
+syntax: glob
+*.cmp original
+*.cmp
+array data sheets/*.doc
+*.ccf
+.hgignore
+array data sheets/*.xls

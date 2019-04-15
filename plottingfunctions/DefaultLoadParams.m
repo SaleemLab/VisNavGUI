@@ -39,7 +39,7 @@ LoadParams.Samplerate = 60;
 LoadParams.LoadSmthTime = 150;
 
 %Type of signal used to synch recordings from different sources
-LoadParams.SynchType = 'SynchPulse';
+LoadParams.SynchType = 'Photodiode';%'SynchPulse';%'Speed';%'Reward';
 
 %Orgin of the Synchsignal used as a reference for all types of data
 LoadParams.SynchSignalRef = 'VR';
