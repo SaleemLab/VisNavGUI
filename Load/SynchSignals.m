@@ -1,11 +1,13 @@
 function [Signal_ZeroIdx, Signal_relativeRate] = SynchSignals(SynchRef, SynchSignal, SynchUpSamplingRef, SynchUpSampling)
-%Returns the time of start of SynchRef in recording units of SynchSignal
-%and also returns the sampling rate of SynchSignal relative to SynchRef
+%Returns the time of start of SynchRef in SynchSignal and the sampling rate
+%of SynchSignal relative to SynchRef. These are expressed in units of the
+%original sampling associated to SynchSignal, i.e. taking into account the
+%upsampling of the Synch signals.
 
-%Finding pulses
 SynchRef = SynchRef(:) - mean(SynchRef);
 SynchSignal = SynchSignal(:) - mean(SynchSignal);
 
+%Finding pulses in the SynchSignals
 %if the 1st value in the ref is lower than the mean, we look at up
 %transitions, otherwise, we look at down transitions
 if SynchRef(1) < 0
@@ -20,9 +22,11 @@ end
 SynchIntRef = diff(SynchTimesRef);
 SynchInt = diff(SynchTimes);
 
-%Selecting a pattern of n intervals in the middle of the reference signal
+%Selecting a pattern of n intervals in the middle of the reference signal,
+%where n is a fraction of the total number of intervals
+n = 1/20;
 NintRef = numel(SynchIntRef);
-Npattern = floor((NintRef)/20);
+Npattern = floor((NintRef)*n);
 idxRef = floor((NintRef/2)-round(Npattern/2)):(floor(NintRef/2)+round(Npattern/2));
 Npattern = numel(idxRef);
 patternRef = SynchIntRef(idxRef);
@@ -63,6 +67,9 @@ p = coeffvalues(g);
 if abs(numel(SynchSignal) - p(1)*numel(SynchSignal)) < 1
     p(1) = 1;
 end
+
+%Converting p(1) and p(2) in units of the original recording associated to
+%SynchSignal, i.e. taking into account the upsampling of the Synch signals
 Signal_relativeRate = p(1) * SynchUpSampling/SynchUpSamplingRef;
 Signal_ZeroIdx = -floor(p(2) / SynchUpSampling);%floor((SynchTimes(SynchIntcorrection) + p(2)) / SynchUpSampling) + 1;
 end

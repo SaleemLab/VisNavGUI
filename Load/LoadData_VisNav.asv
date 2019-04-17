@@ -78,7 +78,7 @@ for iexp = 1:numel(S.explist)
         EXP.Nav = combineTwoexpts(EXP.Nav, Nav);
     end
     if ~isempty(S.Spk_path{iexp,1})
-        [Spk_ZeroIdx, Spk_relativeRate] = SynchSignals(SynchSignalRef, single(Spk_SynchSignal), Spk_SynchUpSampling/Nav_SynchUpSampling);
+        [Spk_ZeroIdx, Spk_relativeRate] = SynchSignals(SynchSignalRef, single(Spk_SynchSignal), Ref_SynchUpSampling, Spk_SynchUpSampling);
         Spk = LoadSpkData(S.Spk_path{iexp,1}, sampleTimes, Spk_ZeroIdx, Spk_relativeRate, P.LoadParams.Channels, 'good', {'icell','id'});
         if ~isprop(EXP, 'Spk')
             EXP.addprop('Spk');
@@ -86,7 +86,7 @@ for iexp = 1:numel(S.explist)
         EXP.Spk = combineTwoexpts(EXP.Spk, Spk);
     end
     if ~isempty(S.Lfp_path{iexp,1})
-        [Lfp_ZeroIdx, Lfp_relativeRate] = SynchSignals(SynchSignalRef, Lfp_SynchSignal, Lfp_SynchUpSampling);
+        [Lfp_ZeroIdx, Lfp_relativeRate] = SynchSignals(SynchSignalRef, Lfp_SynchSignal, Ref_SynchUpSampling, Lfp_SynchUpSampling);
         Lfp = LoadLfpData(S.Lfp_path{iexp,1}, sampleTimes, Lfp_ZeroIdx, Lfp_relativeRate, P.LoadParams.Channels);
         if ~isprop(EXP, 'Lfp')
            EXP.addprop('Lfp');
@@ -94,7 +94,7 @@ for iexp = 1:numel(S.explist)
         EXP.Lfp = combineTwoexpts(EXP.Lfp, Lfp);
     end
     if ~isempty(S.Vis_path{iexp,2})
-        [Vis_ZeroIdx, Vis_relativeRate] = SynchSignals(SynchSignalRef, Vis_SynchSignal, Vis_SynchUpSampling);
+        [Vis_ZeroIdx, Vis_relativeRate] = SynchSignals(SynchSignalRef, Vis_SynchSignal, Ref_SynchUpSampling, Vis_SynchUpSampling);
         if ~isprop(EXP, 'Vis')
             EXP.addprop('Vis');
         end
