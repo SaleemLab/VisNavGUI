@@ -1,4 +1,4 @@
-function Spk = LoadSpkData(Spkfilepath, sampleTimes, ZeroCorrection, RateCorrection, Channels, clusterType, fieldnames)
+function Spk = LoadSpkData(Spkfilepath, sampleTimes, ZeroIdx, RateCorrection, Channels, clusterType, fieldnames)
 %
 load(Spkfilepath,'TempChans');
 if ~iscell(TempChans)
@@ -6,7 +6,7 @@ if ~iscell(TempChans)
 end
 
 if nargin < 3
-    ZeroCorrection = 0;
+    ZeroIdx = 0;
 end
 if nargin < 4
     RateCorrection = 1;
@@ -36,7 +36,7 @@ for iprobe = 1:numel(TempChans)
                     Spk.spikeIDs{icell} = TempChans(ichan).id;
                     Spk.chanIDs{icell} = TempChans(ichan).ichan;
                     Spk.ProbeIDs{icell} = iprobe;
-                    Spk.spikeTimes{icell} = TempChans(ichan).spiketimes - ZeroCorrection;
+                    Spk.spikeTimes{icell} = TempChans(ichan).spiketimes - ZeroIdx + 1;
                     Spk.spikeTimes{icell}(Spk.spikeTimes{icell}<0) = [];
                     for k = 1:numel(fieldnames)
                         Spk.(fieldnames{k}){icell} = TempChans(ichan).(fieldnames{k});

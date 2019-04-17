@@ -28,33 +28,38 @@ for iexp = 1:numel(S.explist)
     
     %Loading Synchronization signals from the different data types********%
     if ~isempty(S.Nav_path{iexp,2})
-        Nav_SynchSignal = GetSynchSignal(S.Nav_path{iexp,2}, P.LoadParams.SynchType);
+        [Nav_SynchSignal, Nav_SynchUpSampling] = GetSynchSignal(S.Nav_path{iexp,2}, P.LoadParams.SynchType);
         if strcmp(P.LoadParams.SynchSignalRef,'VR')
             SynchSignalRef = Nav_SynchSignal;
+            Ref_SynchUpSampling = Nav_SynchUpSampling;
         end
     end
     if ~isempty(S.Spk_path{iexp,2})
-        Spk_SynchSignal = GetSynchSignal(S.Spk_path{iexp,2}, P.LoadParams.SynchType);
+        [Spk_SynchSignal, Spk_SynchUpSampling] = GetSynchSignal(S.Spk_path{iexp,2}, P.LoadParams.SynchType);
         if strcmp(P.LoadParams.SynchSignalRef,'ephys')
             SynchSignalRef = Spk_SynchSignal;
+            Ref_SynchUpSampling = Spk_SynchUpSampling;
         end
     end
     if ~isempty(S.Lfp_path{iexp,2})
-        Lfp_SynchSignal = GetSynchSignal(S.Lfp_path{iexp,2}, P.LoadParams.SynchType);
+        [Lfp_SynchSignal, Lfp_SynchUpSampling] = GetSynchSignal(S.Lfp_path{iexp,2}, P.LoadParams.SynchType);
         if strcmp(P.LoadParams.SynchSignalRef,'ephys')
             SynchSignalRef = Spk_SynchSignal;
+            Ref_SynchUpSampling = Lfp_SynchUpSampling;
         end
     end
     if ~isempty(S.Vis_path{iexp,2})
-        Vis_SynchSignal = GetSynchSignal(S.Vis_path{iexp,2}, P.LoadParams.SynchType);
+        [Vis_SynchSignal, Vis_SynchUpSampling] = GetSynchSignal(S.Vis_path{iexp,2}, P.LoadParams.SynchType);
         if strcmp(P.LoadParams.SynchSignalRef,'BonV')
             SynchSignalRef = Vis_SynchSignal;
+            Ref_SynchUpSampling = Vis_SynchUpSampling;
         end
     end
     if ~isempty(S.Eye_path{iexp,2})
-        Eye_SynchSignal = GetSynchSignal(S.Eye_path{iexp,2}, P.LoadParams.SynchType);
+        [Eye_SynchSignal, Eye_SynchUpSampling] = GetSynchSignal(S.Eye_path{iexp,2}, P.LoadParams.SynchType);
         if strcmp(P.LoadParams.SynchSignalRef,'eye')
             SynchSignalRef = Eye_SynchSignal;
+            Ref_SynchUpSampling = Eye_SynchUpSampling;
         end
     end
     
@@ -65,7 +70,7 @@ for iexp = 1:numel(S.explist)
     %Loading resampling and synching the data
     %Concatenating the data from successive experiments
     if ~isempty(S.Nav_path{iexp,1})
-        [Nav_ZeroIdx, Nav_relativeRate] = SynchSignals(SynchSignalRef, Nav_SynchSignal);
+        [Nav_ZeroIdx, Nav_relativeRate] = SynchSignals(SynchSignalRef, Nav_SynchSignal, Ref_SynchUpSampling, Nav_SynchUpSampling);
         Nav = LoadNavData(S.Nav_path{iexp,1}, P.LoadParams.LoadSmthTime, sampleTimes, Nav_ZeroIdx, Nav_relativeRate);
         if ~isprop(EXP, 'Nav')
             EXP.addprop('Nav');
@@ -73,7 +78,7 @@ for iexp = 1:numel(S.explist)
         EXP.Nav = combineTwoexpts(EXP.Nav, Nav);
     end
     if ~isempty(S.Spk_path{iexp,1})
-        [Spk_ZeroIdx, Spk_relativeRate] = SynchSignals(SynchSignalRef, single(Spk_SynchSignal));
+        [Spk_ZeroIdx, Spk_relativeRate] = SynchSignals(SynchSignalRef, single(Spk_SynchSignal), Spk_SynchUpSampling/Nav_SynchUpSampling);
         Spk = LoadSpkData(S.Spk_path{iexp,1}, sampleTimes, Spk_ZeroIdx, Spk_relativeRate, P.LoadParams.Channels, 'good', {'icell','id'});
         if ~isprop(EXP, 'Spk')
             EXP.addprop('Spk');
@@ -81,7 +86,7 @@ for iexp = 1:numel(S.explist)
         EXP.Spk = combineTwoexpts(EXP.Spk, Spk);
     end
     if ~isempty(S.Lfp_path{iexp,1})
-        [Lfp_ZeroIdx, Lfp_relativeRate] = SynchSignals(SynchSignalRef, Lfp_SynchSignal);
+        [Lfp_ZeroIdx, Lfp_relativeRate] = SynchSignals(SynchSignalRef, Lfp_SynchSignal, Lfp_SynchUpSampling);
         Lfp = LoadLfpData(S.Lfp_path{iexp,1}, sampleTimes, Lfp_ZeroIdx, Lfp_relativeRate, P.LoadParams.Channels);
         if ~isprop(EXP, 'Lfp')
            EXP.addprop('Lfp');
@@ -89,7 +94,7 @@ for iexp = 1:numel(S.explist)
         EXP.Lfp = combineTwoexpts(EXP.Lfp, Lfp);
     end
     if ~isempty(S.Vis_path{iexp,2})
-        [Vis_ZeroIdx, Vis_relativeRate] = SynchSignals(SynchSignalRef, Vis_SynchSignal);
+        [Vis_ZeroIdx, Vis_relativeRate] = SynchSignals(SynchSignalRef, Vis_SynchSignal, Vis_SynchUpSampling);
         if ~isprop(EXP, 'Vis')
             EXP.addprop('Vis');
         end
@@ -97,7 +102,7 @@ for iexp = 1:numel(S.explist)
         %EXP.Vis = combineTwoexpts(EXP.Vis, Vis);
     end
     if ~isempty(S.Eye_path{iexp,2})
-        [Eye_ZeroTime, Eye_relativeRate] = SynchSignals(SynchSignalRef, Eye_SynchSignal);
+        [Eye_ZeroTime, Eye_relativeRate] = SynchSignals(SynchSignalRef, Eye_SynchSignal, Eye_SynchUpSampling);
         if ~isprop(EXP, 'Eye')
             EXP.addprop('Eye');
         end

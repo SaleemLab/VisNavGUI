@@ -1,4 +1,4 @@
-function [Signal_ZeroIdx, Signal_relativeRate] = SynchSignals(SynchRef, SynchSignal, SynchUpSampling)
+function [Signal_ZeroIdx, Signal_relativeRate] = SynchSignals(SynchRef, SynchSignal, SynchUpSamplingRef, SynchUpSampling)
 %Returns the time of start of SynchRef in recording units of SynchSignal
 %and also returns the sampling rate of SynchSignal relative to SynchRef
 
@@ -60,9 +60,9 @@ tref = SynchTimesRef(SynchTimesRefStartIdx:(SynchTimesRefStartIdx + numel(t) - 1
 foptions = fitoptions('Method','LinearLeastSquares');
 g = fit(t,tref,'poly1',foptions);
 p = coeffvalues(g);
-Signal_relativeRate = p(1);
-if abs(numel(SynchSignal) - Signal_relativeRate*numel(SynchSignal)) < 1
-    Signal_relativeRate = 1;
+if abs(numel(SynchSignal) - p(1)*numel(SynchSignal)) < 1
+    p(1) = 1;
 end
+Signal_relativeRate = p(1) * SynchUpSampling/SynchUpSamplingRef;
 Signal_ZeroIdx = -floor(p(2) / SynchUpSampling);%floor((SynchTimes(SynchIntcorrection) + p(2)) / SynchUpSampling) + 1;
 end
