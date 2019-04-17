@@ -31,8 +31,10 @@ screenTimes(find(diff(screenTimes)<100) + 1) = [];
 Aperiodic = zeros(fulllength,1,'int16');
 Aperiodic(screenTimes) = 1;
 
+UpSampling = 1;
+
 savedfilename = filepath_ns5(1:(strfind(filepath_ns5,'.')-1));
-save([nevDir filesep 'Synch_BR' savedfilename '.mat'], 'Aperiodic', 'PhotoDiode', 'Licks', 'RotEnc', '-v7.3');
+save([nevDir filesep 'Synch_BR_' savedfilename '.mat'], 'UpSampling', 'Aperiodic', 'PhotoDiode', 'Licks', 'RotEnc', '-v7.3');
 
 nevclose;
 

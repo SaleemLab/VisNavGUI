@@ -1,4 +1,4 @@
-function [Signal_ZeroIdx, Signal_relativeRate] = SynchSignals(SynchRef, SynchSignal, SynchUpSampling)
+function [Signal_Zero, Signal_relativeRate] = SynchSignals(SynchRef, SynchSignal, SynchUpSampling)
 %Returns the time of start of SynchRef in recording units of SynchSignal
 %and also returns the sampling rate of SynchSignal relative to SynchRef
 
@@ -44,19 +44,13 @@ SynchCorr = SynchInt*patternRef(:);
 [~, correction] = max(SynchCorr);
 SynchIntcorrection = correction - idxRef(1) + 1;
 
-%Will now estimate the offset and sampling rate of SynchSignal 
-%relative to SynchRef
-
-%Selection of the Pulse times (in recording unit) that are common between 
-%the two signals
-SynchTimesRefStartIdx = max(1,-(SynchIntcorrection - 1) + 1);
+%Sampling rate of SynchSignal relative to SynchRef
 SynchTimesStartIdx = max(1,SynchIntcorrection);
-SynchTimesEndIdx = min(numel(SynchTimes),(SynchTimesStartIdx+numel(SynchTimesRef(SynchTimesRefStartIdx:end))-1));
+SynchTimesEndIdx = min(numel(SynchTimes),(SynchTimesStartIdx+numel(SynchTimesRef)-1));
 t = SynchTimes(SynchTimesStartIdx:SynchTimesEndIdx);%-SynchTimes(SynchTimesStartIdx);
+SynchTimesRefStartIdx = max(1,-SynchIntcorrection+1 + 1);
 tref = SynchTimesRef(SynchTimesRefStartIdx:(SynchTimesRefStartIdx + numel(t) - 1)); %-SynchTimesRef(SynchTimesRefStartIdx);
 
-%Estimation of the index offset and relative rate by fitting the following 
-%equation: tref = p(1)*t + p(2)
 foptions = fitoptions('Method','LinearLeastSquares');
 g = fit(t,tref,'poly1',foptions);
 p = coeffvalues(g);
@@ -64,5 +58,5 @@ Signal_relativeRate = p(1);
 if abs(numel(SynchSignal) - Signal_relativeRate*numel(SynchSignal)) < 1
     Signal_relativeRate = 1;
 end
-Signal_ZeroIdx = -floor(p(2) / SynchUpSampling);%floor((SynchTimes(SynchIntcorrection) + p(2)) / SynchUpSampling) + 1;
+Signal_Zero = -floor(p(2) / SynchUpSampling);%floor((SynchTimes(SynchIntcorrection) + p(2)) / SynchUpSampling) + 1;
 end

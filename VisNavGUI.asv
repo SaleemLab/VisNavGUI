@@ -81,23 +81,14 @@ function GUI_LoadVRMenu_Callback(source, event, GUI, EXP, P, SpatialMapsDialog, 
 % end
 
 S.animalname = 'M151104A_JF';
-S.series = 126;
-S.explist = 101:105;
+P.LoadParams.series = 126;
+P.LoadParams.exp = S.explist;
 for iexp = 1:5
-    S.Nav_path{iexp,1} = ['C:\Users\justj\Documents\DATA\M151104\behavior\126\10' num2str(iexp) filesep 'VRdata_M151104A_JF_126_session_10' num2str(iexp) '_trial001.mat'];
-    S.Nav_path{iexp,2} = ['C:\Users\justj\Documents\DATA\M151104\behavior\126\10' num2str(iexp) filesep 'Synch_VR_M151104A_JF_126_session_10' num2str(iexp) '_trial001.mat'];
+    S.Nav_path{1,1} = ['C:\Users\justj\Documents\DATA\M151104\behavior\126\10' num2str(iexp) filesep 'VRdata_M151104A_JF_126_session_10' num2str(iexp) '_trial001.mat'];
+    S.Nav_path{1,2} = ['C:\Users\justj\Documents\DATA\M151104\behavior\126\10' num2str(iexp) filesep 'Synch_VR_M151104A_JF_126_session_10' num2str(iexp) '_trial001.mat'];
     
-    S.Spk_path{iexp,1} = ['C:\Users\justj\Documents\DATA\M151104\ephys\126\10' num2str(iexp) filesep 'Spkdata_M151104A_JF_126_10' num2str(iexp) '.mat'];
-    S.Spk_path{iexp,2} = ['C:\Users\justj\Documents\DATA\M151104\ephys\126\10' num2str(iexp) filesep 'Synch_BR_M151104A_JF_126_10' num2str(iexp) '.mat'];
-    
-    S.Lfp_path{iexp,1} = [];
-    S.Lfp_path{iexp,2} = [];
-    
-    S.Vis_path{iexp,1} = [];
-    S.Vis_path{iexp,2} = [];
-    
-    S.Eye_path{iexp,1} = [];
-    S.Eye_path{iexp,2} = [];
+    S.Spk_path{1,1} = ['C:\Users\justj\Documents\DATA\M151104\ephys\126\10' num2str(iexp) filesep 'Spkdata_M151104A_JF_126_10' num2str(iexp) '.mat'];
+    S.Spk_path{1,2} = ['C:\Users\justj\Documents\DATA\M151104\ephys\126\10' num2str(iexp) filesep 'Synch_BR_M151104A_JF_126_10' num2str(iexp) '.mat'];
 end
 
 LoadData_VisNav(EXP, P, S);

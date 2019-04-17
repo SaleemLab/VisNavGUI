@@ -1,22 +1,17 @@
-function [es, Synch] = createVRfile_fromold(VRDIRname, animalname, series, iexp, samplerate, Synchsamplerate)
+function es = createVRfile_fromold(VRDIRname, animalname, series, iexp, samplerate, Synchsamplerate)
 %Saving the VR behavior data and a Synch file. Should be run for each 
 %experiment seperately. The VR data are saved as a structure with continous
 %fields sampled at samplerate. The follwowing varaibles are also saved in a
 %Synch file in the same folder: UpSampling, Aperiodic, PhotoDiode, Licks, 
 %RotEnc. The Synch variables are sampled at Synchsamplerate (should high 
 %enough to get a good synchronization based on the frequency of the events 
-%occuring in the signal used for synchronization, optimally, same sampling 
-%as the ephys recording).
+%occuring in the signal used for synchronization).
 %inputs:
 % - VRDIRname: directory with the .mat file containing the VRData of the
 %              experiment
 % - animalname: animal name to be saved in the output structure
 % - series: series number to be saved in the output structure
 % - iexp: experiment number to be saved in the output structure
-%
-%outputs (saved automatically in VRDIRname)
-% - es: VR data sampled at samplerate
-% - Synch: synchronization signals sampled at Synchsamplerate
 
 VRfname = ls([VRDIRname filesep 'M*.mat']);
 
@@ -177,7 +172,7 @@ for f = 1:size(VRfname,1)
     save([VRDIRname filesep 'VRdata_' VRfname(f,:)], 'es', '-v7.3');
     
     %create Synchfile for VRdata
-    UpSampling = Synch.samplerate/es.sampleRate;
+    UpSampling = Synchsamplerate/samplerate;
     Aperiodic = Synch.Aperiodic;
     PhotoDiode = Synch.PhotoDiode;
     Licks = Synch.Licks;
