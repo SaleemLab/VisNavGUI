@@ -4,8 +4,7 @@ function Spk = LoadSpkData(Spkfilepath, sampleTimes, ZeroIdx, RateCorrection, Ch
 %(t = RateCorrection*(spiketimes - ZeroIdx).
 %inputs:
 % - Spkfilepath: file path of the .mat file containing the spike sorting
-%   data as a structure with fields as cell arrays corresponding at least
-%   to spikeIDs, chanIDs, ProbeIDs, and spikeTimes.
+%   data as a structure array with at least fields id, ichan and spiketimes
 % - sampleTimes: SampleTimes in synchronized recording units.
 % - ZeroIdx: index offset to convert spike time units in synchronized 
 %   recording units.
@@ -54,7 +53,7 @@ end
 icell = 0;
 for iprobe = 1:numel(TempChans)
     if ~isnan(sum(Channels{iprobe}))
-        for ichan = 1:length(TempChans{iprobe}.spikeIDs)
+        for ichan = 1:length(TempChans{iprobe})
             if ismember(TempChans{iprobe}.chanIDs{ichan},Channels{iprobe})
                 if isempty(clusterType) || ~isempty(strfind(TempChans{iprobe}.spikeIDs{ichan},clusterType))
                     icell = icell + 1;

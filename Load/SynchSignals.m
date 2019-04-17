@@ -42,25 +42,25 @@ end
 SynchInt = (SynchInt - repmat(mean(SynchInt,2), [1 Npattern]));
 SynchInt = SynchInt./repmat(sqrt(sum(SynchInt.^2,2)), [1 Npattern]);
 
-%Computing normalized correlation between patterns of intervals and finding
-%the position of maximal correlation in units of number of pulses
+%Estimating the time of start of SynchRef in SynchSignal in units of number
+%of pulses, by computing the normalized correlation between the pattern of 
+%intervals selcted in SynchIntRef with the intervals in SynchInt.
 SynchCorr = SynchInt*patternRef(:);
 [~, correction] = max(SynchCorr);
 SynchIntcorrection = correction - idxRef(1) + 1;
 
 %Will now estimate the offset and sampling rate of SynchSignal 
 %relative to SynchRef
-
-%Selection of the Pulse times (in recording unit) that are common between 
-%the two signals
+%First, we select the pulse times (in recording units) that are common 
+%between the two signals
 SynchTimesRefStartIdx = max(1,-(SynchIntcorrection - 1) + 1);
 SynchTimesStartIdx = max(1,SynchIntcorrection);
 SynchTimesEndIdx = min(numel(SynchTimes),(SynchTimesStartIdx+numel(SynchTimesRef(SynchTimesRefStartIdx:end))-1));
 t = SynchTimes(SynchTimesStartIdx:SynchTimesEndIdx);%-SynchTimes(SynchTimesStartIdx);
 tref = SynchTimesRef(SynchTimesRefStartIdx:(SynchTimesRefStartIdx + numel(t) - 1)); %-SynchTimesRef(SynchTimesRefStartIdx);
 
-%Estimation of the index offset and relative rate by fitting the following 
-%equation: tref = p(1)*t + p(2)
+%Second, we estimate the index offset and relative rate by fitting the 
+%following equation: tref = p(1)*t + p(2)
 foptions = fitoptions('Method','LinearLeastSquares');
 g = fit(t,tref,'poly1',foptions);
 p = coeffvalues(g);
@@ -68,8 +68,8 @@ if abs(numel(SynchSignal) - p(1)*numel(SynchSignal)) < 1
     p(1) = 1;
 end
 
-%Converting p(1) and p(2) in units of the original recording associated to
-%SynchSignal, i.e. taking into account the upsampling of the Synch signals
+%Fimally, we convert p(1) and p(2) in units of the original recording 
+%associated to SynchSignal, i.e. taking into account the upsampling of the Synch signals
 Signal_relativeRate = p(1) * SynchUpSampling/SynchUpSamplingRef;
-Signal_ZeroIdx = -floor(p(2) / SynchUpSampling);%floor((SynchTimes(SynchIntcorrection) + p(2)) / SynchUpSampling) + 1;
+Signal_ZeroIdx = -floor(p(2) / SynchUpSampling);% + 1;
 end
