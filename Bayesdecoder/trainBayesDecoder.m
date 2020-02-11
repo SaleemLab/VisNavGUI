@@ -1,9 +1,9 @@
-function [obj, prediction, Vfilt, fPosterior, fnonNormPosterior] = trainBayesDecoder(obj, V, Vfilt, Y, Yfilt, T, Tfilt, Xsmth_win, subset, NiteRand)
+function [obj, prediction, V, fPosterior, fnonNormPosterior] = trainBayesDecoder(obj, V, Y, Yfilt, T, Xsmth_win, subset, NiteRand)
 % program to implement a 1D linear decoder (using ridge regression) given training, cv and test
 % sets , delay
-% Usage: [Performance, Prediction, Model] = linearDecoder(Y, Vfilt, CVO, train_mean)
+% Usage: [Performance, Prediction, Model] = linearDecoder(Y, V, CVO, train_mean)
 % Inputs: Y - firing rate
-%         Vfilt - Variable being coded/decoded
+%         V - Variable being coded/decoded
 %         CVO(optional) - crossvalidation object
 %         train_mean(optional) - mean over the training set, special cases only
 %
@@ -22,12 +22,12 @@ if isempty(obj.kfold)
 end
 
 if isempty(obj.CVO)
-    obj.CVO = crossValPartition(ones(1,length(Vfilt)),obj.kfold);
+    obj.CVO = crossValPartition(ones(1,length(V)),obj.kfold);
 end
 
 if obj.kfold == 1
     obj.CVO.kfold = 1;
-    obj.CVO.train{1}= true(1,length(Vfilt));
+    obj.CVO.train{1}= ones(1,length(V));
     obj.CVO.cv{1}   = obj.CVO.train{1};
     obj.CVO.test{1} = obj.CVO.train{1};
 end
@@ -38,14 +38,13 @@ else
     calTrainMean = 0;
 end
 
-if sum(isnan(Vfilt))>0 | sum(isnan(Y(:)))>0
+if sum(isnan(V))>0 | sum(isnan(Y(:)))>0
     display('WARNING!!! Nans in the data: making a temp fix');
-    t = ones(size(Vfilt));
-    t(isnan(Vfilt)) = 0;
+    t = ones(size(V));
+    t(isnan(V)) = 0;
     t(isnan(sum(Y,2))) = 0;
-    Vfilt = Vfilt(t>0);
+    V = V(t>0);
     Y = Y(t>0,:);
-    V = V(t>0,:);
 end
 
 % for icell = 1:size(Y, 2);
@@ -55,7 +54,7 @@ end
 obj.performance = zeros(1,obj.CVO.kfold);
 Prediction = [];
 % Bayes decoder needs discretization
-% [Vfilt, obj.bins] = normalise1var(Vfilt, obj.numBins);
+% [V, obj.bins] = normalise1var(V, obj.numBins);
 fPosterior = [];
 fnonNormPosterior = [];
 
@@ -76,9 +75,9 @@ for iter = 1:obj.CVO.kfold
     Ycv     = Y(obj.CVO.cv{iter},:);
     Ytest   = Y(obj.CVO.test{iter},:);    
 
-    Vtrain  = Vfilt(obj.CVO.train{iter},:);
-    Vcv     = Vfilt(obj.CVO.cv{iter},:);
-    Vtest   = Vfilt(obj.CVO.test{iter},:);        
+    Vtrain  = V(obj.CVO.train{iter},:);
+    Vcv     = V(obj.CVO.cv{iter},:);
+    Vtest   = V(obj.CVO.test{iter},:);        
     if calTrainMean
         train_mean = mean(Vtrain,1);
     else
@@ -90,7 +89,7 @@ for iter = 1:obj.CVO.kfold
     % ...the main training component
     respModel = zeros(size(Y,2),obj.numBins);
     for icell = 1:size(Y,2)
-%         [model(icell)] = get1Dmap(Y(:,icell), Vfilt', obj.numBins, obj.bins, obj.CVO, iter, obj.sampleRate, obj.smth_win);
+%         [model(icell)] = get1Dmap(Y(:,icell), V', obj.numBins, obj.bins, obj.CVO, iter, obj.sampleRate, obj.smth_win);
         obj.model.trained(iter).respModel_orig(icell,:) = allMap.model.tuning(icell).respModel(iter,:);
         %         obj.model.trained(iter).respModel(icell,:) = model(icell).tuning./sum(model(icell).tuning);
         obj.model.trained(iter).respModel(icell,:) = allMap.model.tuning(icell).respModel(iter,:);
@@ -112,11 +111,11 @@ for iter = 1:obj.CVO.kfold
     Ycv     = Y(obj.CVO.cv{iter},:);
     Ytest   = Yfilt(obj.CVO.test{iter},:);%Y(obj.CVO.test{iter},:); 
     
-    Ttest = Tfilt(obj.CVO.test{iter});
+    Ttest = T(obj.CVO.test{iter});
 
-    Vtrain  = Vfilt(obj.CVO.train{iter},:);
-    Vcv     = Vfilt(obj.CVO.cv{iter},:);
-    Vtest   = Vfilt(obj.CVO.test{iter},:);        
+    Vtrain  = V(obj.CVO.train{iter},:);
+    Vcv     = V(obj.CVO.cv{iter},:);
+    Vtest   = V(obj.CVO.test{iter},:);        
     if calTrainMean
         train_mean = mean(Vtrain,1);
     else
@@ -163,7 +162,7 @@ obj.meanPerformance = nanmean(Perf);
 
 % obj.model.meanModel = squeeze(nanmedian(tempModel,1)); % problem if only
 % one cell;
-obj.model.meanModel = (nanmean(tempModel,1));
+obj.model.meanModel = (nanmedian(tempModel,1));
 obj.model.meanModel = reshape(obj.model.meanModel,size(obj.model.meanModel,2),size(obj.model.meanModel,3));
 
 obj.model.bestModel = zeros(size(obj.model.meanModel));

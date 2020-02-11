@@ -58,7 +58,7 @@ classdef TbayesDecoder < TDecoder
         FoptiSmooth;
         Fcircular;
         Flookuptable;
-    end
+     end
     
     methods
         function obj = TbayesDecoder(varargin)
@@ -78,24 +78,25 @@ classdef TbayesDecoder < TDecoder
                 internal.stats.parseArgs(pnames,dflts,varargin{:});
         end
         
-        function [obj, prediction, X, Posterior, nPosterior, nonNormPosterior] = trainDecoder(obj, X, Xfilt, Y, Yfilt, T, Tfilt, Xsmth_win, subset)
-            if nargin<8
+        function [obj, prediction, X, Posterior, nPosterior, nonNormPosterior] = trainDecoder(obj, X, Y, Yfilt, T, Xsmth_win, subset)
+            
+            if nargin<6
                 Xsmth_win = obj.Xsmth_win;
             else
                 obj.Xsmth_win = Xsmth_win;
             end
-            if nargin<9
+            if nargin<7
                 subset = true(size(X));
             end
-            obj.CVO = [];
+%             obj.CVO = [];
             baseline = 1./obj.numBins;
             if ~obj.Flookuptable
-                [obj, prediction, X, Posterior, nonNormPosterior] = trainBayesDecoder(obj, X, Xfilt, Y, Yfilt, T, Tfilt, Xsmth_win, subset);
+                [obj, prediction, X, Posterior, nonNormPosterior] = trainBayesDecoder(obj, X, Y, Yfilt, T, Xsmth_win, subset);
             else
                 [obj, prediction, X, Posterior, nonNormPosterior] = trainBayesDecoder2(obj, X, Y, T, Xsmth_win, subset);
             end
             
-            nPosterior = Posterior./repmat(nanmedian(Posterior),size(Posterior,1),1);
+            nPosterior = Posterior./repmat(median(Posterior),size(Posterior,1),1);
             nPosterior = nPosterior./(sum(nPosterior,2)*ones(1,size(nPosterior,2)));
             nPosterior   = nPosterior/baseline;
         end
@@ -144,7 +145,7 @@ classdef TbayesDecoder < TDecoder
             end
             nPosterior = zeros(size(Posterior));
             for iter = 1:size(Posterior,3)
-                nPosterior(:,:,iter) = Posterior(:,:,iter)./repmat(nanmedian(Posterior(:,:,iter)),size(Posterior(:,:,iter),1),1);
+                nPosterior(:,:,iter) = Posterior(:,:,iter)./repmat(median(Posterior(:,:,iter)),size(Posterior(:,:,iter),1),1);
                 nPosterior(:,:,iter) = nPosterior(:,:,iter)./(sum(nPosterior(:,:,iter),2)*ones(1,size(nPosterior(:,:,iter),2)));
                 nPosterior(:,:,iter)   = nPosterior(:,:,iter)/baseline;
             end
@@ -160,6 +161,6 @@ classdef TbayesDecoder < TDecoder
             
 %             [X, ~] = normalise1var(X, obj.numBins);
         end        
-    end
-end
+     end
+ end
 

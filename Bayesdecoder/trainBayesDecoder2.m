@@ -101,6 +101,8 @@ for iter = 1:obj.CVO.kfold
     obj.model.EV(iter,obj.model.EV(iter,:)<0) = 0;    
 end
 
+Yfilt=Y; % 2019-02 MM temp fix
+
 fPosterior = zeros(size(Yfilt,1),obj.numBins);
 fnonNormPosterior = zeros(size(Yfilt,1),obj.numBins);
 Prediction = zeros(size(Yfilt,1),1);
