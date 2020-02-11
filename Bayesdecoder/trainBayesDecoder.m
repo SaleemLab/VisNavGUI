@@ -109,7 +109,7 @@ Prediction = zeros(size(Yfilt,1),1);
 for iter = 1:obj.CVO.kfold
     Ytrain  = Y(obj.CVO.train{iter},:);
     Ycv     = Y(obj.CVO.cv{iter},:);
-    Ytest   = Yfilt(obj.CVO.test{iter},:);%Y(obj.CVO.test{iter},:); 
+    Ytest   = Y(obj.CVO.test{iter},:); %Yfilt(obj.CVO.test{iter},:);%
     
     Ttest = T(obj.CVO.test{iter});
 
